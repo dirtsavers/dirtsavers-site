@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>About | DirtSavers Retaining Wall &amp; Hardscape Engineering</title>
-<meta name="description" content="DirtSavers, LLC is an Aledo, Texas engineering firm led by Michael Marshall, P.E., focused on retaining walls, screen walls and entry monuments.">
+<title>Details in 3D | DirtSavers Retaining Wall &amp; Hardscape Engineering</title>
+<meta name="description" content="DirtSavers designs and seals retaining walls, screen walls, entry monuments and shade structure foundations across Texas. TBPE Firm F-14138, Aledo, TX.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 32'%3E%3Crect x='0' y='22' width='14' height='10' fill='%23B85A1C'/%3E%3Crect x='4' y='11' width='14' height='10' fill='%23B85A1C'/%3E%3Crect x='8' y='0' width='14' height='10' fill='%23B85A1C'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,15 +15,29 @@
 <div class="util"><div class="wrap"><span>Aledo, Texas &middot; Retaining wall and hardscape engineering statewide</span><div><a href="tel:+14698347446">469.834.7446</a> &nbsp;&middot;&nbsp; <a href="mailto:mike@dirtsavers.com">mike@dirtsavers.com</a></div></div></div>
 <header class="top"><div class="wrap">
 <a class="brand" href="index.html" aria-label="DirtSavers home"><svg viewBox="0 0 40 32" aria-hidden="true"><rect x="0" y="22" width="14" height="10" fill="var(--accent)"/><rect x="4" y="11" width="14" height="10" fill="var(--accent)"/><rect x="8" y="0" width="14" height="10" fill="var(--accent)"/><rect x="16" y="22" width="10" height="10" fill="currentColor"/><rect x="20" y="11" width="10" height="10" fill="currentColor"/><rect x="28" y="22" width="12" height="10" fill="currentColor"/></svg><span><b>DIRTSAVERS</b><small>Retaining Wall &amp; Hardscape Engineering</small></span></a>
-<nav class="links" aria-label="Main"><a href="services.html">Services</a><a href="global-stability.html">Global Stability</a><a href="details.html">Details in 3D</a><a href="projects.html">Projects</a><a href="areas.html">Areas Served</a><a href="about.html" aria-current="page">About</a><a class="navcta" href="contact.html">Send Plans</a></nav>
+<nav class="links" aria-label="Main"><a href="services.html">Services</a><a href="global-stability.html">Global Stability</a><a href="details.html" aria-current="page">Details in 3D</a><a href="projects.html">Projects</a><a href="areas.html">Areas Served</a><a href="about.html">About</a><a class="navcta" href="contact.html">Send Plans</a></nav>
 </div></header>
 <main>
-<section class="pagehead"><div class="wrap"><p class="label">About</p><h1>An engineer who stays with the job</h1></div></section><section><div class="wrap bio"><div class="prose"><p>DirtSavers, LLC is a Texas engineering firm based in Aledo, focused on retaining walls, screen walls, hardscape, shade structures, entry monuments and the foundations under them. The firm has designed more than 1,000 projects for more than 100 contractors, builders and developers, and every set of plans is engineered and sealed by Michael Marshall, P.E.</p>
-<h2>Meet Michael</h2>
-<p>Michael Marshall, P.E., is the founder of DirtSavers, serving clients throughout Texas. His work focuses on retaining walls, hardscape features, shade structures and entry monuments.</p>
-<p>Michael began his career in construction surveying and cost estimating while attending the University of Texas at Arlington, where he graduated in 2006. He later worked for a Fortune 500 homebuilder, value engineering land development projects across the country. That background shapes how he engineers: with attention to construction methods, cost, and the people responsible for getting projects built. He has been a licensed Professional Engineer in Texas since 2011.</p>
-<p>Michael values strong working relationships with owners, contractors and clients. He emphasizes practical designs, clear communication and planning that respects the project schedule.</p>
-<p>Outside of work, Michael enjoys hunting, traveling with his wife and children, and cheering on his two daughters and younger son in sports and cheer.</p></div><div class="facts"><div><span class="k">Firm</span><span class="v">DirtSavers, LLC</span></div><div><span class="k">Founder</span><span class="v">Michael Marshall, P.E.</span></div><div><span class="k">TBPE Firm No.</span><span class="v">F-14138</span></div><div><span class="k">Based in</span><span class="v">Aledo, Texas</span></div><div><span class="k">Projects designed</span><span class="v">1,000+</span></div><div><span class="k">Licensed P.E.</span><span class="v">Texas, since 2011</span></div><div><span class="k">Education</span><span class="v">UT Arlington, 2006</span></div><div><span class="k">Phone</span><span class="v"><a href="tel:+14698347446">469.834.7446</a></span></div></div></div></section>
+<section class="pagehead"><div class="wrap"><h1>Take a detail apart</h1><p class="lede">Every wall and column we seal is a stack of parts that each have a job. Scroll or pinch on the model to pull it apart and turn it. Drag to look around.</p></div></section>
+<section class="x3d"><div class="wrap">
+  <div class="tabs" role="tablist" aria-label="Choose a detail">
+    <button role="tab" data-k="wall" aria-selected="true">Stone gravity retaining wall</button>
+    <button role="tab" data-k="screen" aria-selected="false">Screen wall on piers</button>
+    <button role="tab" data-k="monument" aria-selected="false">Entry monument column</button>
+  </div>
+  <div class="x3d-grid">
+    <div class="x3d-view">
+      <div id="stage" tabindex="0" aria-label="3D exploded view. Use plus and minus to take it apart, arrows to turn it."><div id="labels" aria-hidden="true"></div></div>
+      <div class="x3d-ctl">
+        <button class="btn ghost" id="assemble" type="button">Put it together</button>
+        <label class="rng"><span>Assembled</span><input id="explode" type="range" min="0" max="100" value="35" aria-label="How far apart"><span>Apart</span></label>
+        <button class="btn" id="explodeAll" type="button">Take it apart</button>
+      </div>
+    </div>
+    <ol id="legend" class="legend" aria-label="Parts"></ol>
+  </div>
+  <p class="note">Illustrations for explanation. Sizes, bars and materials on a real job come from the sealed plans for that job.</p>
+</div></section>
 </main>
 <section class="cta-band"><div class="wrap"><h2>Have plans ready? Send them over for a scope and schedule.</h2><a href="contact.html">Send your plans</a></div></section>
 <div class="horizon-wrap" aria-hidden="true"><span class="horizon"></span></div>
@@ -35,5 +49,7 @@
 </div>
 <div class="legal"><div class="wrap"><span>&copy; 2026 DirtSavers, LLC &middot; Aledo, Texas</span><span>Texas Registered Engineering Firm F-14138</span></div></div>
 </footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="details.js"></script>
 </body>
 </html>

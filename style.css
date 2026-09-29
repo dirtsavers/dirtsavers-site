@@ -292,7 +292,7 @@ body{line-height:1.7}
 @media (max-width:900px){.x3d-grid{grid-template-columns:minmax(0,1fr)}.legend{max-height:none}}
 
 /* stone wall background, light and fixed behind the page */
-body{background-color:var(--bg);background-image:linear-gradient(color-mix(in srgb,var(--bg) 72%,transparent),color-mix(in srgb,var(--bg) 72%,transparent)),url(img/stone-bg.jpg);background-size:cover;background-attachment:fixed;background-position:center}
+body{background-color:var(--bg);background-image:linear-gradient(color-mix(in srgb,var(--bg) 35%,transparent),color-mix(in srgb,var(--bg) 35%,transparent)),url(img/stone-bg.jpg);background-size:cover;background-attachment:fixed;background-position:center}
 .horizon-wrap,.cta-band{background:transparent}
 .horizon::after{background:var(--bg)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background-image:none}}

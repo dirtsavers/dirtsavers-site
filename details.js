@@ -97,42 +97,151 @@
     return g;
   };
 
-  /* ---------- 1. Stone gravity retaining wall ---------- */
-  function buildWall() {
-    seed = 11; const d = new Detail(); const L = 10, courses = 10, ch = 0.8, set = 0.1;
-    const pad = d.part('Reinforced concrete footing', 'Cast on undisturbed or compacted subgrade, below the frost and moisture zone.', [0, -1.8, 0]);
-    pad.add(box(L + 0.6, 1, 4.2, M.concrete, 0, -0.5, -1.4));
-    const steel = d.part('Footing reinforcement', 'Continuous bars with cross bars, held up on chairs for cover.', [0, -3.6, 1.2]);
-    [-2.9, -1.4, 0.1].forEach(z => steel.add(bar(L + 0.3, 0.035, M.rebar, 'x', 0, -0.72, z)));
-    for (let x = -L / 2 + 0.3; x <= L / 2 - 0.2; x += 0.9) steel.add(bar(3.6, 0.03, M.rebar, 'z', x, -0.8, -1.4));
-    let backs = [];
-    for (let i = 0; i < courses; i++) {
-      const g = d.part(i === 0 ? 'Stone units, bottom course buried' : i === 1 ? 'Stone units, battered face' : null, i === 0 ? 'The first course sits below finished grade for embedment.' : 'Each course steps back from the one below, leaning the wall into the hill.', [0, 0.42 * (i + 1), 0.1 * (i + 1)], i);
-      const depth = 3.2 - (1.3 * i) / (courses - 1), zf = -i * set, y = i * ch + ch / 2;
-      backs.push(zf - depth);
-      let x = -L / 2 + (i % 2 ? 0.8 : 0) - (i % 2 ? 1.6 : 0);
-      while (x < L / 2) {
-        const w = Math.min(1.5 + rnd() * 0.7, L / 2 - x); const x0 = Math.max(x, -L / 2); const ww = Math.min(x + w, L / 2) - x0;
-        if (ww > 0.2) { const b = box(ww - 0.03, ch - 0.03, depth, M.block[(rnd() * 4) | 0], x0 + ww / 2, y, zf - depth / 2); b.userData.spread = (x0 + ww / 2) * 0.06; g.add(b); }
+  /* ---------- 1. Stone and mortar gravity retaining wall (per RW1/1, 8'-0" row of the schedule) ---------- */
+  function stoneTex(kind) {
+    const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+    const bg = { face: '#8d877c', mortar: '#9b958a', dry: '#3f3832', base: '#948e83' }[kind];
+    g.fillStyle = bg; g.fillRect(0, 0, 512, 512);
+    const pal = kind === 'dry' ? ['#9d8d76', '#8c7d68', '#a8977e', '#7f7160'] : ['#bfb39c', '#a89b85', '#cfc4ae', '#9a8f7c', '#b5a58a', '#c9b99a', '#8f8472'];
+    // random rubble: irregular 5-7 sided stones in loose courses, mortar showing between
+    let y = -10;
+    while (y < 522) {
+      const rh = kind === 'dry' ? 34 + rnd() * 34 : 40 + rnd() * 50;
+      let x = -rnd() * 70;
+      while (x < 522) {
+        const w = (kind === 'dry' ? 36 : 55) + rnd() * (kind === 'dry' ? 44 : 95);
+        const h = rh * (0.7 + rnd() * 0.45), cy = y + rh / 2 + (rnd() - 0.5) * 10, cx = x + w / 2;
+        const n = 5 + ((rnd() * 3) | 0), gap = kind === 'dry' ? 4 : 6;
+        g.fillStyle = pal[(rnd() * pal.length) | 0];
+        g.beginPath();
+        for (let k = 0; k < n; k++) {
+          const a = (k / n) * Math.PI * 2 + rnd() * 0.5;
+          const rx = (w / 2 - gap) * (0.82 + rnd() * 0.18), ry = (h / 2 - gap) * (0.82 + rnd() * 0.18);
+          const px = cx + Math.sign(Math.cos(a)) * Math.pow(Math.abs(Math.cos(a)), 0.55) * rx, py = cy + Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), 0.55) * ry;
+          k ? g.lineTo(px, py) : g.moveTo(px, py);
+        }
+        g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 1.5; g.stroke();
+        g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.ellipse(cx - w * 0.12, cy - h * 0.15, w * 0.22, h * 0.12, 0, 0, 7); g.fill();
         x += w;
       }
+      y += rh;
     }
-    const cap = d.part('Cap stone', 'Set on adhesive or mortar to lock the top course.', [0, 7.2, 0.9]);
-    cap.add(box(L + 0.2, 0.45, 2.2, M.cap, 0, courses * ch + 0.22, -courses * set - 0.95));
-    const agg = d.part('Drainage aggregate zone', 'Clean washed stone behind the wall so water drains down instead of pushing on it.', [0, 0.4, -3.2]);
-    for (let i = 0; i < courses; i++) agg.add(box(L, ch, 1.1, M.gravel, 0, i * ch + ch / 2, backs[i] - 0.55, false));
-    pebbles(420, -L / 2, L / 2, 0, courses * ch, Math.min(...backs) - 1.1, backs[courses - 1], agg);
-    const pipe = d.part('Perforated drain pipe', 'Runs along the base behind the wall and outlets to daylight.', [0, -0.9, -4.4]);
-    const pz = backs[0] - 0.5; pipe.add(bar(L + 0.8, 0.2, M.pipe, 'x', 0, 0.28, pz));
-    for (let x = -L / 2; x <= L / 2; x += 0.35) { const r = new T.Mesh(new T.TorusGeometry(0.2, 0.025, 5, 16), M.pipe); r.rotation.y = Math.PI / 2; r.position.set(x, 0.28, pz); pipe.add(r); }
-    const fab = d.part('Filter fabric', 'Separates the drainage stone from the retained soil so fines do not clog it.', [0, 0.3, -5.8]);
-    const zfab = Math.min(...backs) - 1.15;
-    fab.add(box(L, courses * ch, 0.04, M.fabric, 0, (courses * ch) / 2, zfab, false));
-    const fill = d.part('Compacted retained fill', 'Placed and compacted in lifts behind the fabric.', [0, 0.2, -8.6]);
-    fill.add(box(L, courses * ch, 5, M.fill, 0, (courses * ch) / 2, zfab - 2.55, false));
-    const front = d.part('Finished grade at the toe', 'Ground in front of the wall covers the buried course.', [0, -0.6, 3]);
-    front.add(box(L, 0.8, 3, M.soil, 0, 0.4, 1.5, false));
-    d.center = new T.Vector3(0, 3.8, -3); d.far = 36; d.near = 31; d.yaw0 = -0.75; d.pitch = 0.3;
+    for (let i = 0; i < 1400; i++) { g.fillStyle = `rgba(0,0,0,${rnd() * 0.08})`; g.fillRect(rnd() * 512, rnd() * 512, 2, 2); }
+    // wrap the texture seam for the left/right edges by copying
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(1 / 6, 1 / 6); t.anisotropy = 4;
+    return t;
+  }
+  function gravelTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#6f685e'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 900; i++) { g.fillStyle = ['#a39b8e', '#8f887c', '#b5ada0', '#7d766b'][(rnd() * 4) | 0]; g.beginPath(); g.ellipse(rnd() * 256, rnd() * 256, 2 + rnd() * 5, 2 + rnd() * 4, rnd() * 3, 0, 7); g.fill(); }
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(1 / 1.2, 1 / 1.2); return t;
+  }
+  function soilTex(base) {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 2500; i++) { g.fillStyle = `rgba(${rnd() < 0.5 ? '0,0,0' : '255,255,255'},${rnd() * 0.08})`; g.fillRect(rnd() * 256, rnd() * 256, 2 + rnd() * 3, 2 + rnd() * 3); }
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(1 / 4, 1 / 4); return t;
+  }
+  // extrude a section polygon (s = distance into the hill from the toe, y = height above front grade) along the wall length
+  function sect(pts, m, L, edges = true) {
+    const sh = new T.Shape(pts.map(([s, y]) => new T.Vector2(s, y)));
+    const geo = new T.ExtrudeGeometry(sh, { depth: L, bevelEnabled: false });
+    let mm = m;
+    if (m.map) { // side walls get the stone pattern turned so courses run along the wall
+      const side = m.clone(); side.map = m.map.clone(); side.map.needsUpdate = true; side.map.rotation = Math.PI / 2; mm = [m, side];
+    }
+    const me = new T.Mesh(geo, mm);
+    me.rotation.y = Math.PI / 2; me.position.x = -L / 2;
+    me.castShadow = !m.transparent; me.receiveShadow = true;
+    if (edges && !m.transparent) me.add(new T.LineSegments(new T.EdgesGeometry(geo, 30), edgeMat));
+    return me;
+  }
+  function buildWall() {
+    seed = 11; const d = new Detail(); const L = 12;
+    // 8'-0" wall from the RW1/1 schedule
+    const H = 8, B = 5 + 1 / 12, B1 = 1 + 1 / 12, C = 2.5, C1 = 11 / 12, T0 = 4, A = 16 / 12, Ez = 16 / 12, G = 1;
+    const face = y => B1 + (A * y) / H;                      // 6V:1H battered face
+    const topBack = face(H) + 2.0;                            // top of wall width
+    const back = y => { const lin = B + ((topBack - B) * y) / H; return lin + (Math.floor(y / 1.34) % 2 ? 0.18 : -0.05); }; // irregular back face
+    const tex = { face: stoneTex('face'), mortar: stoneTex('mortar'), dry: stoneTex('dry'), base: stoneTex('base') };
+    const SM = k => new T.MeshStandardMaterial({ map: tex[k], roughness: 0.95 });
+    const gravel = new T.MeshStandardMaterial({ map: gravelTex(), roughness: 1 });
+    const clay = new T.MeshStandardMaterial({ map: soilTex('#86674a'), roughness: 1 });
+    const fillM = new T.MeshStandardMaterial({ map: soilTex('#a88660'), roughness: 1, transparent: true, opacity: 0.55, depthWrite: false });
+    const compM = new T.MeshStandardMaterial({ map: soilTex('#8f7355'), roughness: 1 });
+    const gradeM = new T.MeshStandardMaterial({ map: soilTex('#7c7650'), roughness: 1 });
+    const steps = n => Array.from({ length: n + 1 }, (_, i) => i / n);
+
+    const base = d.part('Stone base with toe and heel', 'Solid stone set in mortar below grade. The toe sticks out in front of the face; the bottom slopes down toward the heel to lock into the soil.', [0, -3.4, 0.6]);
+    base.add(sect([[0, 0], [B, 0], [B, -(C + C1)], [0, -C]], SM('base'), L));
+
+    const faceS = d.part('Face stone, battered 6:1', 'Face stone per contract, laid to a 6 vertical to 1 horizontal batter. All face joints pointed.', [0, 0.2, 3.0]);
+    faceS.add(sect([[face(0), 0], [face(0) + 0.5, 0], [face(H) + 0.5, H], [face(H), H]], SM('face'), L));
+
+    const E = d.part('Fully mortared zone "E"', 'Stone fully mortared top, bottom, front and back: behind the face, the bottom course, the top course and the back stones.', [0, 0.6, 1.2]);
+    E.add(sect([[face(0) + 0.5, 0], [face(0) + Ez, 0], [face(H) + Ez, H], [face(H) + 0.5, H]], SM('mortar'), L));
+    E.add(sect([[face(0) + Ez, 0], [back(0.4) - 0.85, 0], [back(0.4) - 0.85, 0.85], [face(0.85) + Ez, 0.85]], SM('mortar'), L));
+    E.add(sect([[face(H - 0.85) + Ez, H - 0.85], [back(H - 0.4) - 0.85, H - 0.85], [back(H - 0.4) - 0.85, H], [face(H) + Ez, H]], SM('mortar'), L));
+
+    const core = d.part('Tightly fitted stone core', 'Interior stone packed tight. No mortar required in the core.', [0, 2.2, -0.6]);
+    core.add(sect([[face(0.85) + Ez, 0.85], [back(0.85) - 0.85, 0.85], [back(H - 0.85) - 0.85, H - 0.85], [face(H - 0.85) + Ez, H - 0.85]], SM('dry'), L));
+
+    const bk = d.part('Back stones, irregular back face', 'Mortared back course. The back face may be irregular, stepping in as the wall gets thinner toward the top.', [0, 0.4, -2.4]);
+    const ys = steps(12).map(t => t * H);
+    const bpts = [];
+    ys.forEach((y, i) => { const s = back(Math.min(y + 0.01, H - 0.01)); bpts.push([s, y]); if (i < ys.length - 1) bpts.push([s, ys[i + 1]]); });
+    bk.add(sect([[back(0.4) - 0.85, 0], ...bpts, [back(H - 0.4) - 0.85, H]], SM('mortar'), L));
+
+    const cap = d.part('1\'-0" cap', 'Cap stone along the top of the face.', [0, 3.4, 1.4]);
+    cap.add(sect([[face(H) - 0.05, H], [face(H) + 1.0, H], [face(H) + 1.0, H + 0.55], [face(H) - 0.05, H + 0.55]], SM('face'), L));
+
+    const weep = d.part('3" weep holes at 8\' o.c.', 'Set 6" above final grade, running from the drainage stone out through the face. The back end is wrapped in filter fabric and banded.', [0, -0.4, 5.2]);
+    const wy = 0.5;
+    [-4, 4].forEach(x => {
+      const len = back(0.5) + 0.6 - face(wy) + 0.4;
+      const p = new T.Mesh(new T.CylinderGeometry(0.125, 0.125, len, 16, 1, true), M.pipe); p.material.side = T.DoubleSide;
+      p.rotation.x = Math.PI / 2; p.position.set(x, wy, -(face(wy) - 0.2 + len / 2)); p.castShadow = true; weep.add(p);
+      const sock = new T.Mesh(new T.CylinderGeometry(0.17, 0.17, 0.5, 16), M.fabric); sock.rotation.x = Math.PI / 2; sock.position.set(x, wy, -(face(wy) - 0.2 + len - 0.2)); weep.add(sock);
+    });
+
+    const dz = d.part('Drainage zone, 1\'-0" gravel', 'Continuous gravel or clean free-draining rock behind the wall so water gets out through the weeps.', [0, 0.3, -5.2]);
+    const gpts = [];
+    ys.forEach((y, i) => { if (y < wy || y > H - 0.67) return; gpts.push([back(Math.min(y + 0.01, H - 0.7)), y]); });
+    const g0 = wy, g1 = H - 0.67;
+    const inner = steps(16).map(t => g0 + t * (g1 - g0)).map(y => [back(y), y]);
+    dz.add(sect([...inner, ...inner.slice().reverse().map(([s, y]) => [s + G, y])], gravel, L));
+
+    const fab = d.part('Filter fabric around drainage zone', 'Wraps the gravel so fines from the soil do not clog it.', [0, 0.5, -7.0]);
+    const outer = inner.map(([s, y]) => [s + G + 0.05, y]);
+    fab.add(sect([...outer, ...outer.slice().reverse().map(([s, y]) => [s + 0.06, y])], M.fabric, L, false));
+    fab.add(sect([[back(g1), g1], [back(g1) + G + 0.1, g1], [back(g1) + G + 0.1, g1 + 0.05], [back(g1), g1 + 0.05]], M.fabric, L, false));
+    fab.add(sect([[back(g0), g0 - 0.05], [back(g0) + G + 0.1, g0 - 0.05], [back(g0) + G + 0.1, g0], [back(g0), g0]], M.fabric, L, false));
+
+    const comp = d.part('Compacted soil below weep pipe', 'Compacted soil fills in under the drainage zone so water is pushed out the weeps.', [0, -1.2, -5.2]);
+    comp.add(sect([[B, -(C + C1)], [B + G + 0.6, -(C + C1)], [B + G + 0.6, wy - 0.05], [back(0.3), wy - 0.05], [B, 0]], compM, L));
+
+    const slope = s => H + Math.max(0, (s - face(H))) / 4;  // 1V:4H max above the wall
+    const clayP = d.part('Clay cap from onsite soils', '12" of clay over the drainage zone so runoff sheets over the top of the wall instead of soaking in.', [0, 3.6, -5.2]);
+    const c0 = face(H) + 1.0, c1 = back(g1) + G + 0.8;
+    const ctop = steps(8).map(t => c0 + t * (c1 - c0)).map(s => [s, slope(s)]);
+    clayP.add(sect([[c0, H], [c1, g1 + 0.05], ...ctop.slice().reverse()], clay, L));
+
+    const ret = d.part('Retained soil', 'Natural or compacted fill behind the wall. Slope above the wall as required, 1V:4H max.', [0, 0.4, -10]);
+    const r0 = B + G + 0.6, r1 = 14;
+    const rtop = steps(8).map(t => r0 + t * (r1 - r0)).map(s => [s, s < c1 ? g1 : slope(s)]);
+    ret.add(sect([[r0, -(C + C1) - 0.4], [r1, -(C + C1) - 0.4], ...rtop.slice().reverse().filter(([s]) => s <= r1)], fillM, L, false));
+
+    const fg = d.part('Final grade per civil', 'Ground in front of the wall covers the base and the toe. 1V:4H max.', [0, -1.0, 4.4]);
+    fg.add(sect([[-5, -(C + C1) - 0.4], [0, -(C + C1) - 0.4], [0, -C], [0, 0], [-5, -1.25]], gradeM, L));
+
+    const fence = d.part('Fence if required', 'Posts set in PVC sleeves behind the cap when a fence goes on the wall.', [0, 5.6, 0.6]);
+    for (let x = -L / 2 + 0.6; x <= L / 2; x += 5.4) fence.add(bar(4.2, 0.06, M.pipe, 'y', x, H + 2.6, -(face(H) + 1.4)));
+    [H + 1.6, H + 4.2].forEach(y => fence.add(bar(L - 0.6, 0.035, M.pipe, 'x', 0, y, -(face(H) + 1.4))));
+    for (let x = -L / 2 + 0.6; x < L / 2 - 0.3; x += 0.33) fence.add(bar(2.8, 0.018, M.pipe, 'y', x, H + 2.9, -(face(H) + 1.4)));
+
+    d.center = new T.Vector3(0, 3.0, -4.6); d.far = 38; d.near = 44; d.yaw0 = -0.75; d.pitch = 0.2; d.spin = 2.15;
     return d;
   }
 
@@ -240,7 +349,7 @@
     if (cur) scene.remove(cur.root);
     cur = cache[key] || (cache[key] = builders[key]());
     scene.add(cur.root);
-    cur.parts.forEach(p => { if (!p.cloned) { p.cloned = 1; p.g.traverse(o => { if (o.isMesh && o.material && o.material.emissive) o.material = o.material.clone(); }); } p.g.traverse(o => { if (o.isMesh && o.userData.spread === undefined) o.userData.spread = 0; if (o.isMesh || o.isInstancedMesh) o.userData.base = o.userData.base || o.position.clone(); }); });
+    cur.parts.forEach(p => { if (!p.cloned) { p.cloned = 1; p.g.traverse(o => { if (o.isMesh && o.material && !Array.isArray(o.material) && o.material.emissive) o.material = o.material.clone(); }); } p.g.traverse(o => { if (o.isMesh && o.userData.spread === undefined) o.userData.spread = 0; if (o.isMesh || o.isInstancedMesh) o.userData.base = o.userData.base || o.position.clone(); }); });
     const named = cur.parts.filter(p => p.name);
     named.forEach((p, i) => (p.n = i + 1));
     cur.parts.forEach(p => { if (!p.name) p.n = cur.parts.filter(q => q.name && q.note === p.note)[0]?.n || 0; });
@@ -281,7 +390,7 @@
     amt += (target - amt) * (reduced ? 1 : 0.09);
     const e = ease(amt);
     // zooming in turns the detail and pulls the camera closer
-    yaw = cur.yaw0 + userYaw + (reduced ? 0 : e * 1.35);
+    yaw = cur.yaw0 + userYaw + (reduced ? 0 : e * (cur.spin || 1.35));
     const dist = cur.far + (cur.near - cur.far) * e, pitch = cur.pitch + userPitch + e * 0.12;
     camera.position.set(cur.center.x + Math.sin(yaw) * Math.cos(pitch) * dist, cur.center.y + Math.sin(pitch) * dist + e * 0.8, cur.center.z + Math.cos(yaw) * Math.cos(pitch) * dist);
     camera.lookAt(cur.center.x, cur.center.y + e * 1.2, cur.center.z);
@@ -290,8 +399,8 @@
       p.g.position.copy(p.dir).multiplyScalar(k * 0.95);
       p.g.traverse(o => { if (o.userData.spread) o.position.x = o.userData.base.x + o.userData.spread * k * 1.6; });
       const hi = hovered > 0 && p.n === hovered;
-      p.g.traverse(o => { if (o.material && o.material.emissive) o.material.emissive.setHex(0); });
-      if (hi) p.g.traverse(o => { if (o.material && o.material.emissive) o.material.emissive.setHex(0x3a2a18); });
+      p.g.traverse(o => { [].concat(o.material || []).forEach(m => m.emissive && m.emissive.setHex(0)); });
+      if (hi) p.g.traverse(o => { [].concat(o.material || []).forEach(m => m.emissive && m.emissive.setHex(0x3a2a18)); });
     });
     const W = stage.clientWidth, H = stage.clientHeight, show = e > 0.2;
     labelsEl.style.opacity = show ? Math.min(1, (e - 0.2) * 3) : 0;

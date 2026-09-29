@@ -314,6 +314,12 @@
         im.castShadow = true; im.receiveShadow = true; g.add(im);
       });
     }
+    const lad = d.part('Ladder wire joint reinforcement', 'Galvanized ladder-type wire laid in the mortar joints. It ties both faces of the panel together and runs into the columns.', [0, 1.4, 3.4]);
+    for (let c = 3; c < H / bh - 1; c += 3) {
+      const y = c * bh; const zr = WT / 2 - 0.165;
+      [-zr, zr].forEach(z => lad.add(bar(L - 0.4, 0.018, M.tie, 'x', 0, y, z)));
+      for (let x = -L / 2 + 0.4; x <= L / 2 - 0.4; x += 1.33) lad.add(bar(2 * zr, 0.014, M.tie, 'z', x, y, 0));
+    }
     const core = d.part('CMU column cores', 'Each column is hollow concrete block stacked on the grade beam over a pier. The cells get the vertical bars and are grouted solid.', [0, 1.6, -2.8]);
     piers.forEach(x => { for (let c = 0; c < 10; c++) core.add(cmuBox(cw - 0.66 - 0.03, 0.64, WT - 0.66 - 0.03, M.block[(c + (x > 0 ? 1 : 0)) % 4], x, c * 0.667 + 0.333, 0)); });
     const vb = d.part('Vertical bars in the cores', 'Vertical bars run up from the grade beam and pier through the cells of the block, then the cells are grouted.', [0, 2.8, 0.2]);

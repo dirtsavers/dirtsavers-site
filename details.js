@@ -39,13 +39,14 @@
     stone: [mat(0xcbb28a), mat(0xb99d78), mat(0xd8c3a0), mat(0xa98d6b), mat(0xc7a57c)],
     brick: [mat(0xa65a3e), mat(0x9a4f36), mat(0xb3664a), mat(0x8f4a33)],
     gravel: mat(0x9d968a, { transparent: true, opacity: 0.55 }), pebble: mat(0x8e877c),
-    fabric: mat(0xece6da, { transparent: true, opacity: 0.7, side: T.DoubleSide }),
+    fabric: null,
     fill: mat(0x9b7652, { transparent: true, opacity: 0.32, depthWrite: false }),
     soil: mat(0x8c6c4c, { transparent: true, opacity: 0.28, depthWrite: false }),
     pipe: mat(0x2f3134, { roughness: 0.5 }), cap: mat(0xd9d0c0), capDk: mat(0xcbbfa9),
     mortar: mat(0xd8d2c6), panel: mat(0x39322c, { roughness: 0.5, metalness: 0.2 }),
     tie: mat(0x9aa2a8, { metalness: 0.6, roughness: 0.4 })
   };
+  M.fabric = new T.MeshStandardMaterial({ map: fabricTex(), roughness: 0.85, metalness: 0, transparent: true, opacity: 0.94, side: T.DoubleSide });
   const edgeMat = new T.LineBasicMaterial({ color: 0x3a322b, transparent: true, opacity: 0.22 });
   function box(w, h, d, m, x, y, z, edges = true) {
     const g = new T.BoxGeometry(w, h, d);
@@ -138,6 +139,13 @@
     for (let i = 0; i < 900; i++) { g.fillStyle = ['#a39b8e', '#8f887c', '#b5ada0', '#7d766b'][(rnd() * 4) | 0]; g.beginPath(); g.ellipse(rnd() * 256, rnd() * 256, 2 + rnd() * 5, 2 + rnd() * 4, rnd() * 3, 0, 7); g.fill(); }
     const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(1 / 1.2, 1 / 1.2); return t;
   }
+  function fabricTex() { // black nonwoven geotextile: fine weave, tiny perforations
+    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#1b1c1e'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 1800; i++) { g.strokeStyle = `rgba(255,255,255,${0.02 + rnd() * 0.05})`; g.lineWidth = 1; const x = rnd() * 256, y = rnd() * 256, a = rnd() * 6.28, l = 4 + rnd() * 10; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+    for (let y = 6; y < 256; y += 16) for (let x = (y / 16) % 2 ? 14 : 6; x < 256; x += 16) { g.fillStyle = 'rgba(150,150,150,0.55)'; g.beginPath(); g.arc(x + rnd() * 2, y + rnd() * 2, 1.1, 0, 7); g.fill(); }
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(1 / 1.5, 1 / 1.5); return t;
+  }
   function soilTex(base) {
     const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
     g.fillStyle = base; g.fillRect(0, 0, 256, 256);
@@ -194,8 +202,12 @@
     ys.forEach((y, i) => { const s = back(Math.min(y + 0.01, H - 0.01)); bpts.push([s, y]); if (i < ys.length - 1) bpts.push([s, ys[i + 1]]); });
     bk.add(sect([[back(0.4) - 0.85, 0], ...bpts, [back(H - 0.4) - 0.85, H]], SM('mortar'), L));
 
-    const cap = d.part('1\'-0" cap', 'Cap stone along the top of the face.', [0, 3.4, 1.4]);
+    const cap = d.part('1\'-0" cap', 'Cap stone along the top of the face. Openings for the PVC fence post sleeves are left in the top of the wall behind the cap.', [0, 3.4, 1.4]);
     cap.add(sect([[face(H) - 0.05, H], [face(H) + 1.0, H], [face(H) + 1.0, H + 0.55], [face(H) - 0.05, H + 0.55]], SM('face'), L));
+    const pvc = new T.MeshStandardMaterial({ color: 0xf1f1ec, roughness: 0.45, side: T.DoubleSide });
+    for (let x = -L / 2 + 0.6; x <= L / 2; x += 5.4) { // PVC sleeves set in the top of the wall at each post
+      const rim = new T.Mesh(new T.TorusGeometry(0.22, 0.035, 8, 24), pvc); rim.rotation.x = Math.PI / 2; rim.position.set(x, H + 0.05, -(face(H) + 1.4)); cap.add(rim); // sleeve opening in the top of the wall
+    }
 
     const weep = d.part('3" weep holes at 8\' o.c.', 'Set 6" above final grade, running from the drainage stone out through the face. The back end is wrapped in filter fabric and banded.', [0, -0.4, 5.2]);
     const wy = 0.5;
@@ -213,9 +225,9 @@
     const inner = steps(16).map(t => g0 + t * (g1 - g0)).map(y => [back(y), y]);
     dz.add(sect([...inner, ...inner.slice().reverse().map(([s, y]) => [s + G, y])], gravel, L));
 
-    const fab = d.part('Filter fabric around drainage zone', 'Wraps the gravel so fines from the soil do not clog it.', [0, 0.5, -7.0]);
-    const outer = inner.map(([s, y]) => [s + G + 0.05, y]);
-    fab.add(sect([...outer, ...outer.slice().reverse().map(([s, y]) => [s + 0.06, y])], M.fabric, L, false));
+    const fab = d.part('Filter fabric around drainage zone', 'Black nonwoven geotextile, finely perforated so water passes through. Wraps the gravel so fines from the soil do not clog it.', [0, 0.5, -7.0]);
+    const outer = steps(48).map(t => g0 + t * (g1 - g0)).map(y => [back(y) + G + 0.06 + 0.045 * Math.sin(y * 5.2) + 0.02 * Math.sin(y * 13.1), y]);
+    fab.add(sect([...outer, ...outer.slice().reverse().map(([s, y]) => [s + 0.045, y])], M.fabric, L, false));
     fab.add(sect([[back(g1), g1], [back(g1) + G + 0.1, g1], [back(g1) + G + 0.1, g1 + 0.05], [back(g1), g1 + 0.05]], M.fabric, L, false));
     fab.add(sect([[back(g0), g0 - 0.05], [back(g0) + G + 0.1, g0 - 0.05], [back(g0) + G + 0.1, g0], [back(g0), g0]], M.fabric, L, false));
 
@@ -233,11 +245,16 @@
     const rtop = steps(8).map(t => r0 + t * (r1 - r0)).map(s => [s, s < c1 ? g1 : slope(s)]);
     ret.add(sect([[r0, -(C + C1) - 0.4], [r1, -(C + C1) - 0.4], ...rtop.slice().reverse().filter(([s]) => s <= r1)], fillM, L, false));
 
-    const fg = d.part('Final grade per civil', 'Ground in front of the wall covers the base and the toe. 1V:4H max.', [0, -1.0, 4.4]);
+    const fg = d.part('Final grade per civil', 'The soil in front of the wall provides passive pressure against the base and toe, helping hold the wall in place. Final grade per civil, 1V:4H max.', [0, -1.0, 4.4]);
     fg.add(sect([[-5, -(C + C1) - 0.4], [0, -(C + C1) - 0.4], [0, -C], [0, 0], [-5, -1.25]], gradeM, L));
 
-    const fence = d.part('Fence if required', 'Posts set in PVC sleeves behind the cap when a fence goes on the wall.', [0, 5.6, 0.6]);
-    for (let x = -L / 2 + 0.6; x <= L / 2; x += 5.4) fence.add(bar(4.2, 0.06, M.pipe, 'y', x, H + 2.6, -(face(H) + 1.4)));
+    const fence = d.part('Fence if required', 'Posts set in PVC sleeves cast into the top of the wall, behind the cap, when a fence goes on the wall. The sleeve is shown around each post.', [0, 5.6, 0.6]);
+    const pvcF = new T.MeshStandardMaterial({ color: 0xf1f1ec, roughness: 0.45, side: T.DoubleSide });
+    for (let x = -L / 2 + 0.6; x <= L / 2; x += 5.4) {
+      fence.add(bar(6.2, 0.06, M.pipe, 'y', x, H + 1.6, -(face(H) + 1.4)));  // post runs down into the sleeve
+      const col = new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 2.2, 24, 1, true), pvcF); col.position.set(x, H - 1.05, -(face(H) + 1.4)); col.castShadow = true; fence.add(col);
+      const cr = new T.Mesh(new T.TorusGeometry(0.2, 0.025, 8, 24), pvcF); cr.rotation.x = Math.PI / 2; cr.position.set(x, H + 0.05, -(face(H) + 1.4)); fence.add(cr);
+    }
     [H + 1.6, H + 4.2].forEach(y => fence.add(bar(L - 0.6, 0.035, M.pipe, 'x', 0, y, -(face(H) + 1.4))));
     for (let x = -L / 2 + 0.6; x < L / 2 - 0.3; x += 0.33) fence.add(bar(2.8, 0.018, M.pipe, 'y', x, H + 2.9, -(face(H) + 1.4)));
 

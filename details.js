@@ -301,16 +301,23 @@
       const geo = new T.BoxGeometry(bw - 0.03, bh - 0.025, 0.33);
       const counts = [0, 0, 0, 0]; const cells = [];
       for (let c = l * perLift; c < (l + 1) * perLift; c++) {
-        for (let x = -L / 2 + (c % 2 ? bw / 2 : 0); x < L / 2 - 0.01; x += bw) {
-          const xc = x + bw / 2; if (piers.some(p => Math.abs(xc - p) < cw / 2 + 0.2) || xc > L / 2 - 0.3 || xc < -L / 2 + 0.3) continue;
-          const k = (rnd() * 4) | 0; counts[k]++; cells.push([k, xc, c * bh + bh / 2]);
-        }
+        // lay each course between the column faces; the end bricks are cut to fit so every bay is a full rectangle
+        const segs = []; const edges = piers.map(p => [p - cw / 2, p + cw / 2]);
+        for (let e = 0; e < edges.length - 1; e++) segs.push([edges[e][1], edges[e + 1][0]]);
+        segs.forEach(([a, b]) => {
+          let x = a - (c % 2 ? bw / 2 : 0);
+          while (x < b - 0.02) {
+            const x0 = Math.max(x, a), x1 = Math.min(x + bw, b);
+            if (x1 - x0 > 0.05) { const k = (rnd() * 4) | 0; counts[k]++; cells.push([k, (x0 + x1) / 2, c * bh + bh / 2, x1 - x0]); }
+            x += bw;
+          }
+        });
       }
       counts.forEach((n, k) => {
         if (!n) return; const im = new T.InstancedMesh(geo, M.brick[k], n * 2); const o = new T.Object3D(); let i = 0;
-        const bp = [];
-        cells.filter(c => c[0] === k).forEach(([, x, y]) => [-(WT / 2 - 0.165), WT / 2 - 0.165].forEach(z => { o.position.set(x, y, z); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); bp.push(x, y, z); }));
-        im.userData.bricks = { base: bp, cy: (l + 0.5) * perLift * bh, last: -1 };  // each brick spreads out on its own when the panel is pulled apart
+        const bp = [], sx = [];
+        cells.filter(c => c[0] === k).forEach(([, x, y, w]) => [-(WT / 2 - 0.165), WT / 2 - 0.165].forEach(z => { o.position.set(x, y, z); o.scale.set((w - 0.03) / (bw - 0.03), 1, 1); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); bp.push(x, y, z); sx.push((w - 0.03) / (bw - 0.03)); }));
+        im.userData.bricks = { base: bp, sx, cy: (l + 0.5) * perLift * bh, last: -1 };  // each brick spreads out on its own when the panel is pulled apart
         im.castShadow = true; im.receiveShadow = true; g.add(im);
       });
     }
@@ -322,8 +329,10 @@
     }
     const core = d.part('CMU column cores', 'Each column is hollow concrete block stacked on the grade beam over a pier. The cells get the vertical bars and are grouted solid.', [0, 1.6, -2.8]);
     piers.forEach(x => { for (let c = 0; c < 10; c++) core.add(cmuBox(cw - 0.66 - 0.03, 0.64, WT - 0.66 - 0.03, M.block[(c + (x > 0 ? 1 : 0)) % 4], x, c * 0.667 + 0.333, 0)); });
-    const vb = d.part('Vertical bars in the cores', 'Vertical bars run up from the grade beam and pier through the cells of the block, then the cells are grouted.', [0, 2.8, 0.2]);
+    const vb = d.part('Vertical bars in grouted cores', 'Vertical bars run up from the grade beam and pier through the cells of the block. The cells with bars are filled solid with grout.', [0, 2.8, 0.2]);
     piers.forEach(x => { const cl = ((cw - 0.69) - 2 * 0.11 - 0.1) / 2; [-1, 1].forEach(sg => vb.add(bar(H + 1.8, 0.045, M.rebar, 'y', x + sg * (0.05 + cl / 2), H / 2 - 0.9, 0))); });
+    const groutS = new T.MeshStandardMaterial({ color: 0xa7a49c, roughness: 0.95, transparent: true, opacity: 0.5, depthWrite: false });
+    piers.forEach(x => { const cl = ((cw - 0.69) - 2 * 0.11 - 0.1) / 2; [-1, 1].forEach(sg => { const gm = new T.Mesh(new T.BoxGeometry(cl - 0.03, 6.6, 0.4), groutS); gm.position.set(x + sg * (0.05 + cl / 2), 3.3, 0); vb.add(gm); }); });
     const ven = d.part('Stone veneer on the columns', 'Stone veneer wraps the CMU core, finished flush with the brick panel faces.', [0, 1.8, 3.0]);
     piers.forEach(x => {
       let y = 0;
@@ -353,11 +362,16 @@
     const mat_ = d.part('Pier cap reinforcing', 'Bars in the pier cap tie the pier cage and the column bars together.', [0, -1.4, -3.6]);
     for (let s = -1.9; s <= 1.9; s += 0.63) { mat_.add(bar(4.2, 0.035, M.rebar, 'x', 0, -1.2, s)); mat_.add(bar(4.2, 0.035, M.rebar, 'z', s, -1.12, 0)); }
     const bars = [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2], [0, -1.2], [0, 1.2], [-1.2, 0], [1.2, 0]];
-    const vert = d.part('Vertical bars in grouted cells', 'Bars hook into the pier cap with an L at the bottom, run to the top, and are grouted solid in the block cells.', [0, 1.2, 0]);
+    const vert = d.part('Vertical bars in grouted cells', 'Bars hook into the pier cap with an L at the bottom and run to the top. Every cell with a bar is filled solid with grout.', [0, 1.2, 0]);
     bars.forEach(([x, z]) => {
       vert.add(bar(H + 1.35, 0.04, M.rebar, 'y', x, (H + 0.1 - 1.25) / 2, z));   // runs down into the pier cap
       const ox = Math.abs(x) >= Math.abs(z) ? Math.sign(x) || 1 : 0, oz = ox ? 0 : Math.sign(z) || 1;  // L hook turns out toward the edge of the cap
       vert.add(bar(0.9, 0.04, M.rebar, ox ? 'x' : 'z', x + ox * 0.45, -1.25, z + oz * 0.45));
+    });
+    const groutM = new T.MeshStandardMaterial({ color: 0xa7a49c, roughness: 0.95, transparent: true, opacity: 0.5, depthWrite: false });
+    bars.forEach(([x, z]) => {  // grout fills every cell that has a bar
+      const gx = Math.abs(x) > 1 ? Math.sign(x) * (W / 2 - 0.33) : x, gz = Math.abs(z) > 1 ? Math.sign(z) * (W / 2 - 0.33) : z;
+      const gm = new T.Mesh(new T.BoxGeometry(0.4, H - 0.1, 0.4), groutM); gm.position.set(gx, H / 2, gz); vert.add(gm);
     });
     for (let l = 0; l < 3; l++) {
       const g = d.part(l === 0 ? 'CMU structural core' : null, 'Hollow concrete block in running bond. The bars run up through the cells, which are grouted solid. This is the structure behind the stone.', [0, 0.9 + l * 1.1, 0], l);
@@ -466,7 +480,7 @@
         const m4 = new T.Matrix4(), s = 0.22 * k;
         for (let j = 0; j < b.base.length / 3; j++) {
           const x = b.base[3 * j], y = b.base[3 * j + 1], z = b.base[3 * j + 2];
-          m4.makeTranslation(x * (1 + s * 0.6), b.cy + (y - b.cy) * (1 + s * 2.2), z * (1 + s * 3));
+          m4.makeScale(b.sx ? b.sx[j] : 1, 1, 1).setPosition(x * (1 + s * 0.6), b.cy + (y - b.cy) * (1 + s * 2.2), z * (1 + s * 3));
           o.setMatrixAt(j, m4);
         }
         o.instanceMatrix.needsUpdate = true;

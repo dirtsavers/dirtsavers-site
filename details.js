@@ -293,7 +293,9 @@
       }
       counts.forEach((n, k) => {
         if (!n) return; const im = new T.InstancedMesh(geo, M.brick[k], n * 2); const o = new T.Object3D(); let i = 0;
-        cells.filter(c => c[0] === k).forEach(([, x, y]) => [-(WT / 2 - 0.165), WT / 2 - 0.165].forEach(z => { o.position.set(x, y, z); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); }));
+        const bp = [];
+        cells.filter(c => c[0] === k).forEach(([, x, y]) => [-(WT / 2 - 0.165), WT / 2 - 0.165].forEach(z => { o.position.set(x, y, z); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); bp.push(x, y, z); }));
+        im.userData.bricks = { base: bp, cy: (l + 0.5) * perLift * bh, last: -1 };  // each brick spreads out on its own when the panel is pulled apart
         im.castShadow = true; im.receiveShadow = true; g.add(im);
       });
     }
@@ -330,8 +332,12 @@
     const mat_ = d.part('Pier cap reinforcing', 'Bars in the pier cap tie the pier cage and the column bars together.', [0, -1.4, -3.6]);
     for (let s = -1.9; s <= 1.9; s += 0.63) { mat_.add(bar(4.2, 0.035, M.rebar, 'x', 0, -1.2, s)); mat_.add(bar(4.2, 0.035, M.rebar, 'z', s, -1.12, 0)); }
     const bars = [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2], [0, -1.2], [0, 1.2], [-1.2, 0], [1.2, 0]];
-    const vert = d.part('Vertical bars in grouted cells', 'Bars run from the pier cap to the top and are grouted solid in the block cells.', [0, 1.2, 0]);
-    bars.forEach(([x, z]) => vert.add(bar(H + 1, 0.04, M.rebar, 'y', x, H / 2 - 0.4, z)));
+    const vert = d.part('Vertical bars in grouted cells', 'Bars hook into the pier cap with an L at the bottom, run to the top, and are grouted solid in the block cells.', [0, 1.2, 0]);
+    bars.forEach(([x, z]) => {
+      vert.add(bar(H + 1.35, 0.04, M.rebar, 'y', x, (H + 0.1 - 1.25) / 2, z));   // runs down into the pier cap
+      const ox = Math.abs(x) >= Math.abs(z) ? Math.sign(x) || 1 : 0, oz = ox ? 0 : Math.sign(z) || 1;  // L hook turns out toward the edge of the cap
+      vert.add(bar(0.9, 0.04, M.rebar, ox ? 'x' : 'z', x + ox * 0.45, -1.25, z + oz * 0.45));
+    });
     for (let l = 0; l < 3; l++) {
       const g = d.part(l === 0 ? 'CMU structural core' : null, 'Concrete block core in running bond, the structure behind the stone.', [0, 0.9 + l * 1.1, 0], l);
       for (let c = Math.round(l * 5); c < Math.round((l + 1) * 5); c++) {
@@ -434,6 +440,16 @@
       const k = Math.max(0, Math.min(1, e * 1.25 - p.stagger * 0.03));
       p.g.position.copy(p.dir).multiplyScalar(k * 0.95);
       p.g.traverse(o => { if (o.userData.spread) o.position.x = o.userData.base.x + o.userData.spread * k * 1.6; });
+      p.g.traverse(o => {
+        const b = o.userData.bricks; if (!b || Math.abs(b.last - k) < 0.002) return; b.last = k;
+        const m4 = new T.Matrix4(), s = 0.22 * k;
+        for (let j = 0; j < b.base.length / 3; j++) {
+          const x = b.base[3 * j], y = b.base[3 * j + 1], z = b.base[3 * j + 2];
+          m4.makeTranslation(x * (1 + s * 0.6), b.cy + (y - b.cy) * (1 + s * 2.2), z * (1 + s * 3));
+          o.setMatrixAt(j, m4);
+        }
+        o.instanceMatrix.needsUpdate = true;
+      });
       const hi = hovered > 0 && p.n === hovered;
       p.g.traverse(o => { [].concat(o.material || []).forEach(m => m.emissive && m.emissive.setHex(0)); });
       if (hi) p.g.traverse(o => { [].concat(o.material || []).forEach(m => m.emissive && m.emissive.setHex(0x3a2a18)); });

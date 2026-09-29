@@ -359,8 +359,12 @@
     for (let y = -12.0; y <= -1.2; y += 0.9) cage.add(ring(0.74, 0.024, M.rebar, 0, y, 0));
     const ft = d.part('Pier cap', 'Concrete cap poured on top of the pier. The column bars start here.', [0, -2.4, 0]);
     ft.add(box(4.6, 1.5, 4.6, M.concrete, 0, -0.75, 0));
-    const mat_ = d.part('Pier cap reinforcing', 'Bars in the pier cap tie the pier cage and the column bars together.', [0, -1.4, -3.6]);
-    for (let s = -1.9; s <= 1.9; s += 0.63) { mat_.add(bar(4.2, 0.035, M.rebar, 'x', 0, -1.2, s)); mat_.add(bar(4.2, 0.035, M.rebar, 'z', s, -1.12, 0)); }
+    const mat_ = d.part('Pier cap reinforcing', 'Top and bottom mats of bars each way, tied together with closed stirrups. The pier cage and the column bars tie into it.', [0, -1.4, -3.6]);
+    for (let s = -1.9; s <= 1.9; s += 0.63) {
+      mat_.add(bar(4.2, 0.035, M.rebar, 'x', 0, -1.2, s)); mat_.add(bar(4.2, 0.035, M.rebar, 'z', s, -1.12, 0));   // bottom mat
+      mat_.add(bar(4.2, 0.035, M.rebar, 'x', 0, -0.3, s)); mat_.add(bar(4.2, 0.035, M.rebar, 'z', s, -0.38, 0));   // top mat
+    }
+    for (let x = -1.9; x <= 1.91; x += 0.63) mat_.add(loop(4.02, 1.02, 0.022, M.rebar, x, -0.75, 0));   // closed stirrups around both mats
     const bars = [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2], [0, -1.2], [0, 1.2], [-1.2, 0], [1.2, 0]];
     const vert = d.part('Vertical bars in grouted cells', 'Bars hook into the pier cap with an L at the bottom and run to the top. Every cell with a bar is filled solid with grout.', [0, 1.2, 0]);
     bars.forEach(([x, z]) => {

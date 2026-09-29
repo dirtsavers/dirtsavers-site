@@ -247,12 +247,14 @@ body{line-height:1.7}
 .chip{border-radius:999px}
 /* hero wash: soft sunset behind the top of the page */
 .hero{background:radial-gradient(120% 70% at 85% 0%,color-mix(in srgb,var(--sky1) 28%,transparent),transparent 60%)}
-/* Texas horizon silhouettes */
-.horizon{display:block;height:clamp(70px,10vw,150px);background:var(--band);-webkit-mask:url(img/tx-horizon.svg) center bottom/100% 100% no-repeat;mask:url(img/tx-horizon.svg) center bottom/100% 100% no-repeat}
-.horizon-wrap{background:linear-gradient(180deg,var(--sky1),var(--sky2));line-height:0}
-.cta-band{background:linear-gradient(180deg,color-mix(in srgb,var(--sky1) 70%,var(--bg)),var(--sky1));color:var(--ink)}
+/* wall and hardscape skyline */
+.horizon{display:block;position:relative;height:clamp(70px,10vw,150px);background:var(--band);-webkit-mask:url(img/skyline-solid.svg) center bottom/auto 100% repeat-x;mask:url(img/skyline-solid.svg) center bottom/auto 100% repeat-x}
+.horizon::after{content:"";position:absolute;inset:0;background:var(--bg);-webkit-mask:url(img/skyline-lines.svg) center bottom/auto 100% repeat-x;mask:url(img/skyline-lines.svg) center bottom/auto 100% repeat-x}
+.horizon-wrap{background:var(--bg);line-height:0}
+.cta-band{background:var(--bg);color:var(--ink);border-top:1px solid var(--line)}
 .cta-band a{background:var(--band);color:var(--band-ink);border-radius:999px}
 .titleblock .horizon{height:clamp(40px,6vw,80px);background:rgba(241,232,218,.10)}
+.titleblock .horizon::after{background:var(--band)}
 .titleblock{position:relative}
 /* failure video grid */
 .fail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem}

@@ -297,3 +297,9 @@ body{background-color:var(--bg);background-image:linear-gradient(color-mix(in sr
 .horizon::after{background:var(--bg)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background-image:none}}
 :root[data-theme="dark"] body{background-image:none}
+
+/* global stability drawings */
+.gsfig .slipdiag{padding:.75rem;background:var(--bg)}
+.gs-figs{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem}
+.gsfig figcaption b{color:var(--ink);font-weight:600}
+@media (max-width:820px){.gs-figs{grid-template-columns:1fr}}

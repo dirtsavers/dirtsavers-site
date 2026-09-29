@@ -266,38 +266,53 @@
     seed = 23; const d = new Detail(); const L = 16, piers = [-7, 0, 7], H = 6;
     const pr = d.part('Drilled concrete piers', 'Straight-shaft piers carry the wall down to stable soil.', [0, -6.5, 0]);
     piers.forEach(x => { const c = new T.Mesh(new T.CylinderGeometry(0.6, 0.6, 9, 24), M.concreteDk); c.position.set(x, -5.8, 0); c.castShadow = true; c.receiveShadow = true; pr.add(c); });
-    const cages = d.part('Pier reinforcing cages', 'Vertical bars tied inside hoops, extended up into the grade beam.', [0, -3.4, 3.2]);
+    const cages = d.part('Pier cages', 'Vertical bars tied inside hoops, extended up into the grade beam.', [0, -3.4, 3.2]);
     piers.forEach(x => {
       for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; cages.add(bar(10, 0.035, M.rebar, 'y', x + Math.cos(a) * 0.42, -5.2, Math.sin(a) * 0.42)); }
       for (let y = -9.6; y <= -0.4; y += 0.9) cages.add(ring(0.44, 0.022, M.rebar, x, y, 0));
     });
-    const gb = d.part('Grade beam', 'Continuous concrete beam that spans between piers under the wall.', [0, -3.2, 0]);
+    const gb = d.part('Continuous grade beam', 'One continuous concrete beam spanning pier to pier under the whole wall.', [0, -3.2, 0]);
     gb.add(box(L + 1.4, 1.5, 1.4, M.concrete, 0, -0.75, 0));
     const gbs = d.part('Grade beam reinforcing', 'Top and bottom bars with closed stirrups.', [0, -1.6, 2.6]);
     [[-0.3, -0.35], [-0.3, 0.35], [-1.25, -0.35], [-1.25, 0.35]].forEach(([y, z]) => gbs.add(bar(L + 1.2, 0.035, M.rebar, 'x', 0, y, z)));
     for (let x = -L / 2 - 0.5; x <= L / 2 + 0.5; x += 0.75) gbs.add(loop(0.8, 1.05, 0.022, M.rebar, x, -0.78, 0));
-    const bw = 0.67, bh = 0.22, lifts = 3, perLift = Math.round(H / bh / lifts);
+    const vf = d.part('Carton void form', 'Cardboard void form under the grade beam between piers, so swelling clay has room and does not lift the wall.', [0, -4.6, -2.4]);
+    const voidM = new T.MeshStandardMaterial({ color: 0xc9a86e, roughness: 1 });
+    [[-L / 2 - 0.7, -7.6], [-6.4, -0.6], [0.6, 6.4], [7.6, L / 2 + 0.7]].forEach(([a0, a1]) => vf.add(box(a1 - a0, 0.5, 1.3, voidM, (a0 + a1) / 2, -1.75, 0)));
+    // wall is one continuous panel; column faces and panel faces are flush
+    const WT = 1.33, cw = 1.7, bw = 0.67, bh = 0.22, lifts = 3, perLift = Math.round(H / bh / lifts);
     for (let l = 0; l < lifts; l++) {
-      const g = d.part(l === 0 ? 'Brick veneer panels' : null, 'Brick laid in running bond between the columns, tied to the structure behind it.', [0, 1.3 + l * 1.5, 0], l);
+      const g = d.part(l === 0 ? 'Continuous brick panel' : null, 'One continuous panel of brick in running bond, flush with the column faces and tied into the columns.', [0, 1.3 + l * 1.5, 0], l);
       const geo = new T.BoxGeometry(bw - 0.03, bh - 0.025, 0.33);
       const counts = [0, 0, 0, 0]; const cells = [];
       for (let c = l * perLift; c < (l + 1) * perLift; c++) {
         for (let x = -L / 2 + (c % 2 ? bw / 2 : 0); x < L / 2 - 0.01; x += bw) {
-          const xc = x + bw / 2; if (piers.some(p => Math.abs(xc - p) < 1.25) || xc > L / 2 - 0.3 || xc < -L / 2 + 0.3) continue;
+          const xc = x + bw / 2; if (piers.some(p => Math.abs(xc - p) < cw / 2 + 0.2) || xc > L / 2 - 0.3 || xc < -L / 2 + 0.3) continue;
           const k = (rnd() * 4) | 0; counts[k]++; cells.push([k, xc, c * bh + bh / 2]);
         }
       }
       counts.forEach((n, k) => {
         if (!n) return; const im = new T.InstancedMesh(geo, M.brick[k], n * 2); const o = new T.Object3D(); let i = 0;
-        cells.filter(c => c[0] === k).forEach(([, x, y]) => [-0.19, 0.19].forEach(z => { o.position.set(x, y, z); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); }));
+        cells.filter(c => c[0] === k).forEach(([, x, y]) => [-(WT / 2 - 0.165), WT / 2 - 0.165].forEach(z => { o.position.set(x, y, z); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); }));
         im.castShadow = true; im.receiveShadow = true; g.add(im);
       });
     }
-    const cols = d.part('Stone columns over each pier', 'Columns sit directly over the piers and brace the wall panels.', [0, 1.8, 2.8]);
-    piers.forEach(x => { for (let s = 0; s < 7; s++) cols.add(box(2.2, 0.98, 2.2, M.stone[(rnd() * 5) | 0], x, s + 0.5, 0)); });
-    const caps = d.part('Precast caps', 'Wall cap and column caps shed water off the top.', [0, 6.8, 1.2]);
-    piers.forEach(x => caps.add(box(2.7, 0.45, 2.7, M.cap, x, 7.22, 0)));
-    [[-3.5, 5.4], [3.5, 5.4]].forEach(([x, w]) => caps.add(box(w - 0.1, 0.3, 1.0, M.capDk, x, H + 0.15, 0)));
+    const core = d.part('CMU column cores', 'Each column is a concrete block core, grouted solid, sitting on the grade beam over a pier.', [0, 1.6, -2.8]);
+    piers.forEach(x => { for (let c = 0; c < 10; c++) core.add(box(cw - 0.66 - 0.03, 0.64, WT - 0.66 - 0.03, M.block[(c + (x > 0 ? 1 : 0)) % 4], x, c * 0.667 + 0.333, 0)); });
+    const vb = d.part('Vertical bars in the cores', 'Bars run up from the grade beam and pier through the grouted block cores.', [0, 2.8, 0.2]);
+    piers.forEach(x => [-0.25, 0.25].forEach(dx => vb.add(bar(H + 1.8, 0.04, M.rebar, 'y', x + dx, H / 2 - 0.9, 0))));
+    const ven = d.part('Stone veneer on the columns', 'Stone veneer wraps the CMU core, finished flush with the brick panel faces.', [0, 1.8, 3.0]);
+    piers.forEach(x => {
+      let y = 0;
+      while (y < H + 0.3) {
+        const rh = 0.5 + rnd() * 0.3;
+        [[0, WT / 2 - 0.165, cw, 0.33], [0, -(WT / 2 - 0.165), cw, 0.33], [cw / 2 - 0.165, 0, 0.33, WT - 0.66], [-(cw / 2 - 0.165), 0, 0.33, WT - 0.66]].forEach(([dx, dz, w, dd]) => ven.add(box(w - 0.03, Math.min(rh, H + 0.4 - y) - 0.03, dd - 0.03, M.stone[(rnd() * 5) | 0], x + dx, y + Math.min(rh, H + 0.4 - y) / 2, dz)));
+        y += rh;
+      }
+    });
+    const caps = d.part('Continuous cap', 'One cap runs the full length of the wall, with column caps over each pier to shed water.', [0, 6.8, 1.2]);
+    caps.add(box(L + 0.2, 0.3, WT + 0.25, M.capDk, 0, H + 0.15, 0));
+    piers.forEach(x => caps.add(box(cw + 0.4, 0.45, WT + 0.45, M.cap, x, H + 0.62, 0)));
     d.center = new T.Vector3(0, 1.2, 0); d.far = 50; d.near = 46; d.yaw0 = -0.6; d.pitch = 0.22;
     return d;
   }

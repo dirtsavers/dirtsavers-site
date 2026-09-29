@@ -56,6 +56,21 @@
     if (edges && !m.transparent) me.add(new T.LineSegments(new T.EdgesGeometry(g), edgeMat));
     return me;
   }
+  function cmuBox(w, h, d, m, x, y, z) { // hollow concrete block: two open cells through the unit
+    const L = Math.max(w, d), S = Math.min(w, d), fs = Math.min(0.11, S * 0.18), web = 0.1;
+    const sh = new T.Shape(); sh.moveTo(-L / 2, -S / 2); sh.lineTo(L / 2, -S / 2); sh.lineTo(L / 2, S / 2); sh.lineTo(-L / 2, S / 2); sh.lineTo(-L / 2, -S / 2);
+    const cl = (L - 2 * fs - web) / 2, cs = S - 2 * fs;
+    if (cl > 0.08 && cs > 0.08) [-1, 1].forEach(sg => {
+      const cx = sg * (web / 2 + cl / 2), hole = new T.Path();
+      hole.moveTo(cx - cl / 2, -cs / 2); hole.lineTo(cx - cl / 2, cs / 2); hole.lineTo(cx + cl / 2, cs / 2); hole.lineTo(cx + cl / 2, -cs / 2); hole.lineTo(cx - cl / 2, -cs / 2);
+      sh.holes.push(hole);
+    });
+    const g = new T.ExtrudeGeometry(sh, { depth: h, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2); g.translate(0, -h / 2, 0); if (d > w) g.rotateY(Math.PI / 2);
+    const me = new T.Mesh(g, m); me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true;
+    me.add(new T.LineSegments(new T.EdgesGeometry(g, 30), edgeMat));
+    return me;
+  }
   function bar(len, r, m, axis, x, y, z) {
     const me = new T.Mesh(new T.CylinderGeometry(r, r, len, 8), m);
     if (axis === 'x') me.rotation.z = Math.PI / 2;
@@ -187,7 +202,7 @@
     const faceS = d.part('Battered face stone', 'Face stone per contract, laid to a batter so the face leans back into the hill. All face joints pointed.', [0, 0.2, 3.0]);
     faceS.add(sect([[face(0), 0], [face(0) + 0.5, 0], [face(H) + 0.5, H], [face(H), H]], SM('face'), L));
 
-    const E = d.part('Fully mortared zone "E"', 'Stone fully mortared top, bottom, front and back: behind the face, the bottom course, the top course and the back stones.', [0, 0.6, 1.2]);
+    const E = d.part('Fully mortared zone', 'Stone fully mortared top, bottom, front and back: behind the face, the bottom course, the top course and the back stones.', [0, 0.6, 1.2]);
     E.add(sect([[face(0) + 0.5, 0], [face(0) + Ez, 0], [face(H) + Ez, H], [face(H) + 0.5, H]], SM('mortar'), L));
     E.add(sect([[face(0) + Ez, 0], [back(0.4) - 0.85, 0], [back(0.4) - 0.85, 0.85], [face(0.85) + Ez, 0.85]], SM('mortar'), L));
     E.add(sect([[face(H - 0.85) + Ez, H - 0.85], [back(H - 0.4) - 0.85, H - 0.85], [back(H - 0.4) - 0.85, H], [face(H) + Ez, H]], SM('mortar'), L));
@@ -299,10 +314,10 @@
         im.castShadow = true; im.receiveShadow = true; g.add(im);
       });
     }
-    const core = d.part('CMU column cores', 'Each column is a concrete block core, grouted solid, sitting on the grade beam over a pier.', [0, 1.6, -2.8]);
-    piers.forEach(x => { for (let c = 0; c < 10; c++) core.add(box(cw - 0.66 - 0.03, 0.64, WT - 0.66 - 0.03, M.block[(c + (x > 0 ? 1 : 0)) % 4], x, c * 0.667 + 0.333, 0)); });
-    const vb = d.part('Vertical bars in the cores', 'Bars run up from the grade beam and pier through the grouted block cores.', [0, 2.8, 0.2]);
-    piers.forEach(x => [-0.25, 0.25].forEach(dx => vb.add(bar(H + 1.8, 0.04, M.rebar, 'y', x + dx, H / 2 - 0.9, 0))));
+    const core = d.part('CMU column cores', 'Each column is hollow concrete block stacked on the grade beam over a pier. The cells get the vertical bars and are grouted solid.', [0, 1.6, -2.8]);
+    piers.forEach(x => { for (let c = 0; c < 10; c++) core.add(cmuBox(cw - 0.66 - 0.03, 0.64, WT - 0.66 - 0.03, M.block[(c + (x > 0 ? 1 : 0)) % 4], x, c * 0.667 + 0.333, 0)); });
+    const vb = d.part('Vertical bars in the cores', 'Vertical bars run up from the grade beam and pier through the cells of the block, then the cells are grouted.', [0, 2.8, 0.2]);
+    piers.forEach(x => { const cl = ((cw - 0.69) - 2 * 0.11 - 0.1) / 2; [-1, 1].forEach(sg => vb.add(bar(H + 1.8, 0.045, M.rebar, 'y', x + sg * (0.05 + cl / 2), H / 2 - 0.9, 0))); });
     const ven = d.part('Stone veneer on the columns', 'Stone veneer wraps the CMU core, finished flush with the brick panel faces.', [0, 1.8, 3.0]);
     piers.forEach(x => {
       let y = 0;
@@ -339,14 +354,14 @@
       vert.add(bar(0.9, 0.04, M.rebar, ox ? 'x' : 'z', x + ox * 0.45, -1.25, z + oz * 0.45));
     });
     for (let l = 0; l < 3; l++) {
-      const g = d.part(l === 0 ? 'CMU structural core' : null, 'Concrete block core in running bond, the structure behind the stone.', [0, 0.9 + l * 1.1, 0], l);
+      const g = d.part(l === 0 ? 'CMU structural core' : null, 'Hollow concrete block in running bond. The bars run up through the cells, which are grouted solid. This is the structure behind the stone.', [0, 0.9 + l * 1.1, 0], l);
       for (let c = Math.round(l * 5); c < Math.round((l + 1) * 5); c++) {
         const y = c * 0.667 + 0.333, even = c % 2 === 0;
         [[0, -W / 2 + 0.33, 'x'], [0, W / 2 - 0.33, 'x'], [-W / 2 + 0.33, 0, 'z'], [W / 2 - 0.33, 0, 'z']].forEach(([x, z, ax], i) => {
           const along = (ax === 'x') === even;
           const len = along ? W : W - 1.33; const bx = ax === 'x' ? len : 0.66, bz = ax === 'x' ? 0.66 : len;
           const half = len / 2;
-          for (let s = -half; s < half - 0.05; s += 1.33) { const w = Math.min(1.33, half - s); g.add(box(ax === 'x' ? w - 0.03 : bx - 0.03, 0.64, ax === 'x' ? bz - 0.03 : w - 0.03, M.block[(i + c) % 4], ax === 'x' ? s + w / 2 : x, y, ax === 'x' ? z : s + w / 2)); }
+          for (let s = -half; s < half - 0.05; s += 1.33) { const w = Math.min(1.33, half - s); g.add(cmuBox(ax === 'x' ? w - 0.03 : bx - 0.03, 0.64, ax === 'x' ? bz - 0.03 : w - 0.03, M.block[(i + c) % 4], ax === 'x' ? s + w / 2 : x, y, ax === 'x' ? z : s + w / 2)); }
         });
       }
     }

@@ -98,7 +98,7 @@
     return g;
   };
 
-  /* ---------- 1. Stone and mortar gravity retaining wall (per RW1/1, 8'-0" row of the schedule) ---------- */
+  /* ---------- 1. Stone and mortar gravity retaining wall ---------- */
   function stoneTex(kind) {
     const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
     const bg = { face: '#8d877c', mortar: '#9b958a', dry: '#3f3832', base: '#948e83' }[kind];
@@ -168,8 +168,7 @@
   }
   function buildWall() {
     seed = 11; const d = new Detail(); const L = 12;
-    // 8'-0" wall from the RW1/1 schedule
-    const H = 8, B = 5 + 1 / 12, B1 = 1 + 1 / 12, C = 2.5, C1 = 11 / 12, T0 = 4, A = 16 / 12, Ez = 16 / 12, G = 1;
+    const H = 8, B = 5 + 1 / 12, B1 = 1 + 1 / 12, C = 2.5, C1 = 11 / 12, T0 = 4, A = 16 / 12, Ez = 16 / 12, G = 1.6;
     const face = y => B1 + (A * y) / H;                      // 6V:1H battered face
     const topBack = face(H) + 2.0;                            // top of wall width
     const back = y => { const lin = B + ((topBack - B) * y) / H; return lin + (Math.floor(y / 1.34) % 2 ? 0.18 : -0.05); }; // irregular back face
@@ -185,7 +184,7 @@
     const base = d.part('Stone base with toe and heel', 'Solid stone set in mortar below grade. The toe sticks out in front of the face; the bottom slopes down toward the heel to lock into the soil.', [0, -3.4, 0.6]);
     base.add(sect([[0, 0], [B, 0], [B, -(C + C1)], [0, -C]], SM('base'), L));
 
-    const faceS = d.part('Face stone, battered 6:1', 'Face stone per contract, laid to a 6 vertical to 1 horizontal batter. All face joints pointed.', [0, 0.2, 3.0]);
+    const faceS = d.part('Battered face stone', 'Face stone per contract, laid to a batter so the face leans back into the hill. All face joints pointed.', [0, 0.2, 3.0]);
     faceS.add(sect([[face(0), 0], [face(0) + 0.5, 0], [face(H) + 0.5, H], [face(H), H]], SM('face'), L));
 
     const E = d.part('Fully mortared zone "E"', 'Stone fully mortared top, bottom, front and back: behind the face, the bottom course, the top course and the back stones.', [0, 0.6, 1.2]);
@@ -202,14 +201,14 @@
     ys.forEach((y, i) => { const s = back(Math.min(y + 0.01, H - 0.01)); bpts.push([s, y]); if (i < ys.length - 1) bpts.push([s, ys[i + 1]]); });
     bk.add(sect([[back(0.4) - 0.85, 0], ...bpts, [back(H - 0.4) - 0.85, H]], SM('mortar'), L));
 
-    const cap = d.part('1\'-0" cap', 'Cap stone along the top of the face. Openings for the PVC fence post sleeves are left in the top of the wall behind the cap.', [0, 3.4, 1.4]);
+    const cap = d.part('Cap stone', 'Cap stone along the top of the face. Openings for the PVC fence post sleeves are left in the top of the wall behind the cap.', [0, 3.4, 1.4]);
     cap.add(sect([[face(H) - 0.05, H], [face(H) + 1.0, H], [face(H) + 1.0, H + 0.55], [face(H) - 0.05, H + 0.55]], SM('face'), L));
     const pvc = new T.MeshStandardMaterial({ color: 0xf1f1ec, roughness: 0.45, side: T.DoubleSide });
     for (let x = -L / 2 + 0.6; x <= L / 2; x += 5.4) { // PVC sleeves set in the top of the wall at each post
       const rim = new T.Mesh(new T.TorusGeometry(0.22, 0.035, 8, 24), pvc); rim.rotation.x = Math.PI / 2; rim.position.set(x, H + 0.05, -(face(H) + 1.4)); cap.add(rim); // sleeve opening in the top of the wall
     }
 
-    const weep = d.part('3" weep holes at 8\' o.c.', 'Set 6" above final grade, running from the drainage stone out through the face. The back end is wrapped in filter fabric and banded.', [0, -0.4, 5.2]);
+    const weep = d.part('Weep pipes', 'Set just above final grade and spaced along the wall, running from the drainage stone out through the face. The back end is wrapped in filter fabric and banded.', [0, -0.4, 5.2]);
     const wy = 0.5;
     [-4, 4].forEach(x => {
       const len = back(0.5) + 0.6 - face(wy) + 0.4;
@@ -218,7 +217,7 @@
       const sock = new T.Mesh(new T.CylinderGeometry(0.17, 0.17, 0.5, 16), M.fabric); sock.rotation.x = Math.PI / 2; sock.position.set(x, wy, -(face(wy) - 0.2 + len - 0.2)); weep.add(sock);
     });
 
-    const dz = d.part('Drainage zone, 1\'-0" gravel', 'Continuous gravel or clean free-draining rock behind the wall so water gets out through the weeps.', [0, 0.3, -5.2]);
+    const dz = d.part('Drainage zone', 'Continuous gravel or clean free-draining rock behind the wall, sized for the wall, so water gets out through the weeps.', [0, 0.3, -5.2]);
     const gpts = [];
     ys.forEach((y, i) => { if (y < wy || y > H - 0.67) return; gpts.push([back(Math.min(y + 0.01, H - 0.7)), y]); });
     const g0 = wy, g1 = H - 0.67;
@@ -235,17 +234,17 @@
     comp.add(sect([[B, -(C + C1)], [B + G + 0.6, -(C + C1)], [B + G + 0.6, wy - 0.05], [back(0.3), wy - 0.05], [B, 0]], compM, L));
 
     const slope = s => H + Math.max(0, (s - face(H))) / 4;  // 1V:4H max above the wall
-    const clayP = d.part('Clay cap from onsite soils', '12" of clay over the drainage zone so runoff sheets over the top of the wall instead of soaking in.', [0, 3.6, -5.2]);
+    const clayP = d.part('Clay cap from onsite soils', 'A layer of clay over the drainage zone so runoff sheets over the top of the wall instead of soaking in.', [0, 3.6, -5.2]);
     const c0 = face(H) + 1.0, c1 = back(g1) + G + 0.8;
     const ctop = steps(8).map(t => c0 + t * (c1 - c0)).map(s => [s, slope(s)]);
     clayP.add(sect([[c0, H], [c1, g1 + 0.05], ...ctop.slice().reverse()], clay, L));
 
-    const ret = d.part('Retained soil', 'Natural or compacted fill behind the wall. Slope above the wall as required, 1V:4H max.', [0, 0.4, -10]);
+    const ret = d.part('Retained soil', 'Natural or compacted fill behind the wall. Slope above the wall as shown on the plans.', [0, 0.4, -10]);
     const r0 = B + G + 0.6, r1 = 14;
     const rtop = steps(8).map(t => r0 + t * (r1 - r0)).map(s => [s, s < c1 ? g1 : slope(s)]);
     ret.add(sect([[r0, -(C + C1) - 0.4], [r1, -(C + C1) - 0.4], ...rtop.slice().reverse().filter(([s]) => s <= r1)], fillM, L, false));
 
-    const fg = d.part('Final grade per civil', 'The soil in front of the wall provides passive pressure against the base and toe, helping hold the wall in place. Final grade per civil, 1V:4H max.', [0, -1.0, 4.4]);
+    const fg = d.part('Final grade per civil', 'The soil in front of the wall provides passive pressure against the base and toe, helping hold the wall in place. Final grade per the civil plans.', [0, -1.0, 4.4]);
     fg.add(sect([[-5, -(C + C1) - 0.4], [0, -(C + C1) - 0.4], [0, -C], [0, 0], [-5, -1.25]], gradeM, L));
 
     const fence = d.part('Fence if required', 'Posts set in PVC sleeves cast into the top of the wall, behind the cap, when a fence goes on the wall. The sleeve is shown around each post.', [0, 5.6, 0.6]);
@@ -306,12 +305,17 @@
   /* ---------- 3. Entry monument column with sign ---------- */
   function buildMonument() {
     seed = 41; const d = new Detail(); const W = 3.34, H = 10;
-    const ft = d.part('Spread footing', 'Wide footing spreads the column load and resists overturning from wind.', [0, -3, 0]);
-    ft.add(box(7, 1.5, 7, M.concrete, 0, -0.75, 0));
-    const mat_ = d.part('Footing mat and dowels', 'Two-way bar mat with dowels that lap into the column cells.', [0, -1.6, 3.4]);
-    for (let s = -3.1; s <= 3.1; s += 0.62) { mat_.add(bar(6.6, 0.035, M.rebar, 'x', 0, -1.2, s)); mat_.add(bar(6.6, 0.035, M.rebar, 'z', s, -1.12, 0)); }
+    const pier = d.part('Drilled concrete pier', 'A drilled pier under the column carries the load down to stable soil and resists overturning from wind.', [0, -6.0, 0]);
+    const ps = new T.Mesh(new T.CylinderGeometry(1.0, 1.0, 11, 28), M.concreteDk); ps.position.set(0, -7.0, 0); ps.castShadow = true; ps.receiveShadow = true; pier.add(ps);
+    const cage = d.part('Pier cage', 'Vertical bars tied inside hoops, running up out of the pier into the pier cap.', [0, -3.4, 3.6]);
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; cage.add(bar(11.6, 0.04, M.rebar, 'y', Math.cos(a) * 0.72, -6.5, Math.sin(a) * 0.72)); }
+    for (let y = -12.0; y <= -1.2; y += 0.9) cage.add(ring(0.74, 0.024, M.rebar, 0, y, 0));
+    const ft = d.part('Pier cap', 'Concrete cap poured on top of the pier. The column bars start here.', [0, -2.4, 0]);
+    ft.add(box(4.6, 1.5, 4.6, M.concrete, 0, -0.75, 0));
+    const mat_ = d.part('Pier cap reinforcing', 'Bars in the pier cap tie the pier cage and the column bars together.', [0, -1.4, -3.6]);
+    for (let s = -1.9; s <= 1.9; s += 0.63) { mat_.add(bar(4.2, 0.035, M.rebar, 'x', 0, -1.2, s)); mat_.add(bar(4.2, 0.035, M.rebar, 'z', s, -1.12, 0)); }
     const bars = [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2], [0, -1.2], [0, 1.2], [-1.2, 0], [1.2, 0]];
-    const vert = d.part('Vertical bars in grouted cells', 'Bars run from the footing to the top and are grouted solid in the block cells.', [0, 1.2, 0]);
+    const vert = d.part('Vertical bars in grouted cells', 'Bars run from the pier cap to the top and are grouted solid in the block cells.', [0, 1.2, 0]);
     bars.forEach(([x, z]) => vert.add(bar(H + 1, 0.04, M.rebar, 'y', x, H / 2 - 0.4, z)));
     for (let l = 0; l < 3; l++) {
       const g = d.part(l === 0 ? 'CMU structural core' : null, 'Concrete block core in running bond, the structure behind the stone.', [0, 0.9 + l * 1.1, 0], l);
@@ -350,7 +354,7 @@
     const cap = d.part('Cast stone cap', 'Overhanging cap with a drip edge keeps water out of the core.', [0, 3.2, 0]);
     cap.add(box(W + 1.6, 0.55, W + 1.6, M.cap, 0, H + 0.27, 0));
     const crown = new T.Mesh(new T.ConeGeometry((W + 1.2) * 0.72, 0.9, 4), M.capDk); crown.rotation.y = Math.PI / 4; crown.position.set(0, H + 1.0, 0); crown.castShadow = true; cap.add(crown);
-    d.center = new T.Vector3(0, 5.2, 0); d.far = 40; d.near = 37; d.yaw0 = -0.7; d.pitch = 0.2;
+    d.center = new T.Vector3(0, 1.5, 0); d.far = 50; d.near = 46; d.yaw0 = -0.7; d.pitch = 0.2;
     return d;
   }
 
@@ -423,7 +427,12 @@
     labelsEl.style.opacity = show ? Math.min(1, (e - 0.2) * 3) : 0;
     if (show) cur.parts.forEach(p => {
       if (!p.name) return; const el = labelsEl.querySelector(`[data-n="${p.n}"]`);
-      bb.setFromObject(p.g); bb.getCenter(v); v.project(camera);
+      if (!p.pin) { // pick the mesh closest to the part's middle, once
+        bb.setFromObject(p.g); const c = bb.getCenter(new T.Vector3()); let best = null, bd = 1e9; const b2 = new T.Box3(), c2 = new T.Vector3();
+        p.g.traverse(o => { if (!o.isMesh || o.isLineSegments) return; b2.setFromObject(o); b2.getCenter(c2); const dd = c2.distanceTo(c); if (dd < bd) { bd = dd; best = o; } });
+        p.pin = best || p.g;
+      }
+      bb.setFromObject(p.pin); bb.getCenter(v); v.project(camera);
       el.style.transform = `translate(${(v.x * 0.5 + 0.5) * W}px,${(-v.y * 0.5 + 0.5) * H}px)`;
       el.classList.toggle('on', hovered === p.n);
     });

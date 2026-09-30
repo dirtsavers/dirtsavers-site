@@ -429,8 +429,15 @@
   function buildSignWall() {
     seed = 57; const d = new Detail();
     const L = 12, HW = 4.5, HC = 6.5, CW = 2.67, T0 = 1.33, xs = [-(L / 2 + CW / 2), L / 2 + CW / 2];
-    const ft = d.part('Continuous spread footing', 'One reinforced footing runs under the wall and both columns.', [0, -3.4, 0]);
-    ft.add(box(L + 2 * CW + 1.6, 1.5, 4.2, M.concrete, 0, -0.75, 0));
+    const BW = 2.0, FT = 1.5, VB = 0.67, FL = L + 2 * CW;  // footing follows the plan: wall width under the wall, column width under the columns
+    const ft = d.part('Grade beam footing', 'One reinforced footing runs under the wall and both columns, the same width as the wall and the columns above it.', [0, -3.4, 0]);
+    ft.add(box(L, FT, BW, M.concrete, 0, -FT / 2, 0));
+    xs.forEach(cx => ft.add(box(CW, FT, CW, M.concrete, cx, -FT / 2, 0)));
+    const cardM = new T.MeshStandardMaterial({ color: 0xa98f6b, roughness: 0.95 });
+    const vd = d.part('Void boxes', 'Cardboard carton forms under the footing between the piers. They carry the wet concrete during the pour, then break down and leave a gap, so swelling clay cannot push up on the footing. The piers carry the load.', [0, -5.4, -5.6], 1);
+    const pr = 0.95, segs = [[-L / 2, -pr], [pr, L / 2]];
+    segs.forEach(([x0, x1]) => { const w = x1 - x0; const vb = box(w - 0.02, VB, BW - 0.02, cardM, (x0 + x1) / 2, -FT - VB / 2, 0); vd.add(vb); for (let x = x0 + 1.2; x < x1 - 0.3; x += 1.2) vd.add(box(0.02, VB + 0.01, BW + 0.01, M.capDk, x, -FT - VB / 2, 0, false)); });
+    xs.forEach(cx => { [[-CW / 2, -pr], [pr, CW / 2]].forEach(([z0, z1]) => vd.add(box(CW - 0.02, VB, z1 - z0 - 0.02, cardM, cx, -FT - VB / 2, (z0 + z1) / 2))); [[-CW / 2, -pr], [pr, CW / 2]].forEach(([x0, x1]) => vd.add(box(x1 - x0 - 0.02, VB, 2 * pr - 0.02, cardM, cx + (x0 + x1) / 2, -FT - VB / 2, 0))); });
     const pz = d.part('Drilled concrete piers', 'Piers under each column and one at the center carry the monument down to stable soil and resist overturning from wind.', [0, -6.2, 0], 0);
     const pxs = [xs[0], 0, xs[1]];
     pxs.forEach(x => { const c = new T.Mesh(new T.CylinderGeometry(0.9, 0.9, 10, 24), M.concreteDk); c.position.set(x, -6.5, 0); c.castShadow = true; c.receiveShadow = true; pz.add(c); });
@@ -439,14 +446,18 @@
       for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; pc.add(bar(10.9, 0.035, M.rebar, 'y', x + Math.cos(a) * 0.62, -5.95, Math.sin(a) * 0.62)); }
       for (let y = -11.0; y <= -1.6; y += 0.9) pc.add(ring(0.64, 0.022, M.rebar, x, y, 0));
     });
-    const fr = d.part('Footing reinforcing', 'Top and bottom mats of bars each way, tied together with stirrups.', [0, -2.1, 2.8], 1);
-    const FL = L + 2 * CW + 1.2;
-    [-1.25, -0.3].forEach(y => { for (let z = -1.7; z <= 1.71; z += 0.567) fr.add(bar(FL, 0.035, M.rebar, 'x', 0, y, z)); });
-    for (let x = -FL / 2; x <= FL / 2 + 0.01; x += 1.0) { fr.add(bar(3.8, 0.035, M.rebar, 'z', x, -1.17, 0)); fr.add(bar(3.8, 0.035, M.rebar, 'z', x, -0.38, 0)); }
-    for (let x = -FL / 2 + 0.5; x <= FL / 2; x += 2.0) fr.add(loop(3.7, 1.02, 0.022, M.rebar, x, -0.78, 0));
+    const fr = d.part('Footing reinforcing', 'Top and bottom mats of bars each way, tied together with stirrups. Extra bars run through the wider footing under each column.', [0, -2.1, 2.8], 1);
+    [-1.25, -0.3].forEach(y => {
+      for (let z = -0.7; z <= 0.71; z += 0.35) fr.add(bar(FL - 0.3, 0.035, M.rebar, 'x', 0, y, z));
+      xs.forEach(cx => [-1.05, 1.05].forEach(z => fr.add(bar(CW - 0.3, 0.035, M.rebar, 'x', cx, y, z))));
+    });
+    for (let x = -L / 2 + 0.2; x <= L / 2 - 0.19; x += 0.8) { fr.add(bar(BW - 0.3, 0.035, M.rebar, 'z', x, -1.17, 0)); fr.add(bar(BW - 0.3, 0.035, M.rebar, 'z', x, -0.38, 0)); }
+    xs.forEach(cx => { for (let x = cx - CW / 2 + 0.2; x <= cx + CW / 2 - 0.19; x += 0.45) { fr.add(bar(CW - 0.3, 0.035, M.rebar, 'z', x, -1.17, 0)); fr.add(bar(CW - 0.3, 0.035, M.rebar, 'z', x, -0.38, 0)); } });
+    for (let x = -L / 2 + 0.6; x <= L / 2 - 0.5; x += 1.6) fr.add(loop(BW - 0.4, 1.02, 0.022, M.rebar, x, -0.78, 0));
+    xs.forEach(cx => [-0.8, 0, 0.8].forEach(dx => fr.add(loop(CW - 0.4, 1.02, 0.022, M.rebar, cx + dx, -0.78, 0))));
     const vb = d.part('Vertical bars in grouted cells', 'Bars hook into the footing with an L at the bottom and run up through the block. Every cell with a bar is grouted solid.', [0, 1.1, 0], 2);
     const groutM = new T.MeshStandardMaterial({ color: 0xa7a49c, roughness: 0.95, transparent: true, opacity: 0.5, depthWrite: false });
-    const vbar = (x, z, h) => { vb.add(bar(h + 1.2, 0.04, M.rebar, 'y', x, (h - 1.25) / 2, z)); vb.add(bar(0.8, 0.04, M.rebar, 'z', x, -1.25, z + 0.4)); const gm = new T.Mesh(new T.BoxGeometry(0.34, h - 0.1, 0.34), groutM); gm.position.set(x, h / 2, z); vb.add(gm); };
+    const vbar = (x, z, h) => { vb.add(bar(h + 1.2, 0.04, M.rebar, 'y', x, (h - 1.25) / 2, z)); vb.add(bar(0.8, 0.04, M.rebar, 'z', x, -1.25, z + (z > 0.01 ? -0.4 : 0.4))); const gm = new T.Mesh(new T.BoxGeometry(0.34, h - 0.1, 0.34), groutM); gm.position.set(x, h / 2, z); vb.add(gm); };
     for (let x = -L / 2 + 0.67; x < L / 2; x += 2.0) vbar(x, 0, HW);
     xs.forEach(cx => [[-0.6, -0.6], [0.6, -0.6], [-0.6, 0.6], [0.6, 0.6]].forEach(([dx, dz]) => vbar(cx + dx, dz, HC)));
     const core = d.part('CMU core', 'Hollow concrete block laid in running bond, with the cells over the bars grouted solid. This is the structure behind the stone.', [0, 0.5, -3.0], 1);

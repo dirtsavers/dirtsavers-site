@@ -381,3 +381,9 @@ body{background-color:var(--bg);background-image:linear-gradient(color-mix(in sr
 .quote p + cite{margin-top:.4rem}
 .next b{display:block;margin-bottom:.3rem}
 .direct span{line-height:1.5}
+
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr));gap:1rem}
+.gallery .detail figcaption,.work .detail figcaption{flex-direction:column;gap:.15rem;align-items:flex-start}
+.gallery .detail figcaption span:last-child,.work .detail figcaption span:last-child{text-transform:none;letter-spacing:0;font-family:var(--f-body);font-size:.85rem}
+
+.case-img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1.5px solid var(--ink);display:block}

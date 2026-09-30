@@ -418,8 +418,99 @@
     return d;
   }
 
+  /* ---------- 4. Entry monument sign wall ---------- */
+  function buildSignWall() {
+    seed = 57; const d = new Detail();
+    const L = 12, HW = 4.5, HC = 6.5, CW = 2.67, T0 = 1.33, xs = [-(L / 2 + CW / 2), L / 2 + CW / 2];
+    const ft = d.part('Continuous spread footing', 'One reinforced footing runs under the wall and both columns.', [0, -3.4, 0]);
+    ft.add(box(L + 2 * CW + 1.6, 1.5, 4.2, M.concrete, 0, -0.75, 0));
+    const fr = d.part('Footing reinforcing', 'Top and bottom mats of bars each way, tied together with stirrups.', [0, -2.1, 2.8], 1);
+    const FL = L + 2 * CW + 1.2;
+    [-1.25, -0.3].forEach(y => { for (let z = -1.7; z <= 1.71; z += 0.567) fr.add(bar(FL, 0.035, M.rebar, 'x', 0, y, z)); });
+    for (let x = -FL / 2; x <= FL / 2 + 0.01; x += 1.0) { fr.add(bar(3.8, 0.035, M.rebar, 'z', x, -1.17, 0)); fr.add(bar(3.8, 0.035, M.rebar, 'z', x, -0.38, 0)); }
+    for (let x = -FL / 2 + 0.5; x <= FL / 2; x += 2.0) fr.add(loop(3.7, 1.02, 0.022, M.rebar, x, -0.78, 0));
+    const vb = d.part('Vertical bars in grouted cells', 'Bars hook into the footing with an L at the bottom and run up through the block. Every cell with a bar is grouted solid.', [0, 1.1, 0], 2);
+    const groutM = new T.MeshStandardMaterial({ color: 0xa7a49c, roughness: 0.95, transparent: true, opacity: 0.5, depthWrite: false });
+    const vbar = (x, z, h) => { vb.add(bar(h + 1.2, 0.04, M.rebar, 'y', x, (h - 1.25) / 2, z)); vb.add(bar(0.8, 0.04, M.rebar, 'z', x, -1.25, z + 0.4)); const gm = new T.Mesh(new T.BoxGeometry(0.34, h - 0.1, 0.34), groutM); gm.position.set(x, h / 2, z); vb.add(gm); };
+    for (let x = -L / 2 + 0.67; x < L / 2; x += 2.0) vbar(x, 0, HW);
+    xs.forEach(cx => [[-0.6, -0.6], [0.6, -0.6], [-0.6, 0.6], [0.6, 0.6]].forEach(([dx, dz]) => vbar(cx + dx, dz, HC)));
+    const core = d.part('CMU core', 'Hollow concrete block laid in running bond, with the cells over the bars grouted solid. This is the structure behind the stone.', [0, 0.5, -3.0], 1);
+    for (let c = 0; c < Math.round(HW / 0.667); c++) {
+      const y = c * 0.667 + 0.333, off = c % 2 ? 0.67 : 0;
+      for (let x = -L / 2 + off; x < L / 2 - 0.05; x += 1.33) { const w = Math.min(1.33, L / 2 - x); if (w > 0.2) core.add(cmuBox(w - 0.03, 0.64, 0.64, M.block[(c + ((x * 3) | 0)) % 4], x + w / 2, y, 0)); }
+    }
+    xs.forEach((cx, s) => { for (let c = 0; c < Math.round(HC / 0.667); c++) core.add(cmuBox(1.97, 0.64, 1.97, M.block[(c + s) % 4], cx, c * 0.667 + 0.333, 0)); });
+    const venFace = (g, zs) => {
+      let y = 0;
+      while (y < HW - 0.05) {
+        const rh = Math.min(0.42 + rnd() * 0.4, HW - y); let x = -L / 2;
+        while (x < L / 2 - 0.05) { const w = Math.min(0.7 + rnd() * 0.9, L / 2 - x); g.add(box(w - 0.04, rh - 0.04, 0.3, M.stone[(rnd() * 5) | 0], x + w / 2, y + rh / 2, zs * (T0 / 2 + 0.17))); x += w; }
+        y += rh;
+      }
+    };
+    const vf = d.part('Natural stone veneer', 'Hand-set stone over the block on both faces and around the columns.', [0, 0.3, 3.4], 3); venFace(vf, 1);
+    const vk = d.part(null, 'Hand-set stone over the block on both faces and around the columns.', [0, 0.3, -3.6], 3); venFace(vk, -1);
+    xs.forEach((cx, s) => {
+      const g = d.part(null, 'Hand-set stone over the block on both faces and around the columns.', [s ? 3.2 : -3.2, 0.3, 0], 3);
+      const half = CW / 2; let y = 0;
+      while (y < HC - 0.05) {
+        const rh = Math.min(0.45 + rnd() * 0.45, HC - y);
+        [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([fx, fz]) => {
+          let t = -half;
+          while (t < half - 0.05) { const w = Math.min(0.7 + rnd() * 0.8, half - t); const m = M.stone[(rnd() * 5) | 0];
+            if (fz) g.add(box(w - 0.04, rh - 0.04, 0.3, m, cx + t + w / 2, y + rh / 2, fz * (half - 0.15)));
+            else g.add(box(0.3, rh - 0.04, w - 0.04, m, cx + fx * (half - 0.15), y + rh / 2, t + w / 2));
+            t += w; }
+        });
+        y += rh;
+      }
+    });
+    const ties = d.part('Veneer ties', 'Galvanized ties anchor the stone to the block every few courses.', [0, 0.3, 1.9], 2);
+    for (let y = 0.9; y < HW; y += 1.33) for (let x = -L / 2 + 1; x < L / 2; x += 1.6) [1, -1].forEach(s => ties.add(box(0.08, 0.03, 0.34, M.tie, x, y, s * (T0 / 2 + 0.02), false)));
+    const sign = d.part('Sign panel and letters', 'A cast stone or metal panel set into the stone, with the community name in raised letters.', [0, 0.5, 5.6], 4);
+    sign.add(box(6.2, 1.5, 0.16, M.panel, 0, 2.6, T0 / 2 + 0.4));
+    for (let k = 0; k < 9; k++) sign.add(box(0.36, 0.6, 0.06, M.cap, -2.4 + k * 0.6, 2.6, T0 / 2 + 0.51, false));
+    const caps = d.part('Cast stone caps', 'Caps on the wall and columns overhang the stone and shed water away from the core.', [0, 3.2, 0], 5);
+    caps.add(box(L + 0.1, 0.35, T0 + 1.1, M.cap, 0, HW + 0.17, 0));
+    xs.forEach(cx => { caps.add(box(CW + 0.6, 0.5, CW + 0.6, M.capDk, cx, HC + 0.25, 0)); const cr = new T.Mesh(new T.ConeGeometry((CW + 0.3) * 0.72, 0.7, 4), M.cap); cr.rotation.y = Math.PI / 4; cr.position.set(cx, HC + 0.85, 0); cr.castShadow = true; caps.add(cr); });
+    d.center = new T.Vector3(0, 1.8, 0); d.far = 44; d.near = 38; d.yaw0 = -0.45; d.pitch = 0.2; d.spin = 0.9;
+    return d;
+  }
+
+  /* ---------- 5. Overhead entry feature (curved steel truss ribbon) ---------- */
+  function buildEntry() {
+    const d = new Detail();
+    const P = [
+      ['Spread footings', 'Concrete footings sized for the uplift, sliding and bearing that wind puts on the long span.', [0, -2.8, 0], 0x9c968b],
+      ['Concrete pedestals', 'Pedestals bring each support above grade and hold the anchor rods.', [0, -1.6, 0], 0xb5afa4],
+      ['Steel posts', 'Steel posts at each support, set on base plates over the anchor rods.', [0, -0.5, 0], 0x4a5a75],
+      ['Post-to-truss connections', 'Bolted connections where each post picks up the truss.', [0, 0.9, 0], 0x5b6e8c],
+      ['Gusset and splice plates', 'Plates at the post stations and at the field splices, so the truss can ship in pieces and bolt together on site.', [0, 1.9, 0], 0xc8a24a],
+      ['Top and bottom chords', 'Curved chords give the ribbon its shape and carry most of the bending.', [0, 3.0, 0], 0x3a3a3a],
+      ['Side web diagonals', 'Diagonals on each face turn the chords into a truss.', [0, 3.0, 2.6], 0x2b5fd9],
+      ['Plan bracing', 'Bracing in the top and bottom planes stiffens the ribbon sideways against wind.', [0, 4.4, 0], 0xe0a020],
+      ['Verticals and struts', 'Members between the chords tie the truss faces together.', [0, 3.0, -2.6], 0x9a9a9a]];
+    const groups = P.map(([n, note, dir], k) => d.part(n, note, dir, k * 0.6));
+    const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
+    fetch('entry-model.json').then(r => r.json()).then(js => js.forEach((pt, k) => {
+      const g = new T.BufferGeometry();
+      g.setAttribute('position', new T.BufferAttribute(new Float32Array(b64(pt.p)), 3));
+      g.setIndex(new T.BufferAttribute(new Uint16Array(b64(pt.i)), 1)); g.computeVertexNormals();
+      const steel = k >= 2;
+      const me = new T.Mesh(g, mat(P[k][3], { flatShading: true, roughness: steel ? 0.55 : 0.9, metalness: steel ? 0.25 : 0, side: T.DoubleSide }));
+      me.castShadow = true; me.receiveShadow = true; me.userData.spread = 0; me.userData.base = me.position.clone();
+      groups[k].add(me); groups[k].userData.ready = true;
+      // spread the legend pins along the ribbon: anchor each part at one of its own vertices
+      const pa = g.attributes.position.array, tx = -19 + k * 4.75; let bi = 0, bd = 1e9;
+      for (let q = 0; q < pa.length; q += 3) { const dd = Math.abs(pa[q] - tx) + Math.abs(pa[q + 1] - 2) * 0.05; if (dd < bd) { bd = dd; bi = q; } }
+      d.parts[k].anchor = new T.Vector3(pa[bi], pa[bi + 1], pa[bi + 2]);
+    })).catch(() => {});
+    d.center = new T.Vector3(0, 1.8, 0); d.far = 82; d.near = 74; d.yaw0 = 0.12; d.pitch = 0.32; d.spin = 0.18;
+    return d;
+  }
+
   /* ---------- state, legend, interaction ---------- */
-  const builders = { wall: buildWall, screen: buildScreen, monument: buildMonument };
+  const builders = { wall: buildWall, screen: buildScreen, monument: buildMonument, signwall: buildSignWall, entry: buildEntry };
   const legend = document.getElementById('legend');
   const slider = document.getElementById('explode');
   const labelsEl = document.getElementById('labels');
@@ -497,12 +588,13 @@
     labelsEl.style.opacity = show ? Math.min(1, (e - 0.2) * 3) : 0;
     if (show) cur.parts.forEach(p => {
       if (!p.name) return; const el = labelsEl.querySelector(`[data-n="${p.n}"]`);
+      if (!p.g.children.length) { el.style.transform = 'translate(-999px,-999px)'; return; }
       if (!p.pin) { // pick the mesh closest to the part's middle, once
         bb.setFromObject(p.g); const c = bb.getCenter(new T.Vector3()); let best = null, bd = 1e9; const b2 = new T.Box3(), c2 = new T.Vector3();
         p.g.traverse(o => { if (!o.isMesh || o.isLineSegments) return; b2.setFromObject(o); b2.getCenter(c2); const dd = c2.distanceTo(c); if (dd < bd) { bd = dd; best = o; } });
         p.pin = best || p.g;
       }
-      bb.setFromObject(p.pin); bb.getCenter(v); v.project(camera);
+      if (p.anchor) { v.copy(p.anchor); p.g.localToWorld(v); } else { bb.setFromObject(p.pin); bb.getCenter(v); } v.project(camera);
       el.style.transform = `translate(${(v.x * 0.5 + 0.5) * W}px,${(-v.y * 0.5 + 0.5) * H}px)`;
       el.classList.toggle('on', hovered === p.n);
     });

@@ -239,32 +239,43 @@
       const sock = new T.Mesh(new T.CylinderGeometry(0.17, 0.17, 0.5, 16), M.fabric); sock.rotation.x = Math.PI / 2; sock.position.set(x, wy, -(face(wy) - 0.2 + len - 0.2)); weep.add(sock);
     });
 
-    const dz = d.part('Drainage zone', 'Continuous gravel or clean free-draining rock behind the wall, sized for the wall, so water gets out through the weeps.', [0, 0.3, -5.2]);
-    const gpts = [];
-    ys.forEach((y, i) => { if (y < wy || y > H - 0.67) return; gpts.push([back(Math.min(y + 0.01, H - 0.7)), y]); });
-    const g0 = wy, g1 = H - 0.67;
-    const inner = steps(16).map(t => g0 + t * (g1 - g0)).map(y => [back(y), y]);
-    dz.add(sect([...inner, ...inner.slice().reverse().map(([s, y]) => [s + G, y])], gravel, L));
+    // drainage zone: inner side follows the stepped back of the wall; outer side starts at the schedule thickness at the weep and leans back 12V:1H going up
+    const g0 = wy, g1 = H - 0.67, G0 = 1.0, dy = H / 12;
+    const bStep = y => back(Math.min(Math.floor(y / dy), 11) * dy + 0.01);
+    const innerStep = (y0, y1) => { // stepped back-of-wall profile from y0 up to y1, matching the back stones
+      const pts = [[bStep(y0), y0]];
+      for (let k = Math.floor(y0 / dy) + 1; k * dy < y1 - 1e-6; k++) { pts.push([bStep(k * dy - 0.001), k * dy]); pts.push([bStep(k * dy + 0.001), k * dy]); }
+      pts.push([bStep(y1 - 0.001), y1]); return pts;
+    };
+    const lin = y => B + ((topBack - B) * y) / H;
+    const sOut = y => lin(g0) + G0 + (y - g0) / 12;          // 12:1 away from the wall
+    const outerLine = steps(24).map(t => g0 + t * (g1 - g0)).map(y => [sOut(y), y]);
 
-    const fab = d.part('Filter fabric around drainage zone', 'Black nonwoven geotextile, finely perforated so water passes through. Wraps the gravel so fines from the soil do not clog it.', [0, 0.5, -7.0]);
-    const outer = steps(48).map(t => g0 + t * (g1 - g0)).map(y => [back(y) + G + 0.06 + 0.045 * Math.sin(y * 5.2) + 0.02 * Math.sin(y * 13.1), y]);
-    fab.add(sect([...outer, ...outer.slice().reverse().map(([s, y]) => [s + 0.045, y])], M.fabric, L, false));
-    fab.add(sect([[back(g1), g1], [back(g1) + G + 0.1, g1], [back(g1) + G + 0.1, g1 + 0.05], [back(g1), g1 + 0.05]], M.fabric, L, false));
-    fab.add(sect([[back(g0), g0 - 0.05], [back(g0) + G + 0.1, g0 - 0.05], [back(g0) + G + 0.1, g0], [back(g0), g0]], M.fabric, L, false));
+    const dz = d.part('Drainage zone', 'Continuous gravel or clean free-draining rock behind the wall, sized for the wall. The back of the drainage zone leans away from the wall as it goes up, so the zone gets wider toward the top.', [0, 0.3, -5.2]);
+    dz.add(sect([...innerStep(g0, g1), ...outerLine.slice().reverse()], gravel, L));
 
+    const fab = d.part('Filter fabric around drainage zone', 'Black nonwoven geotextile, finely perforated so water passes through. Wraps the gravel so fines from the soil do not clog it, following the back of the drainage zone.', [0, 0.5, -7.0]);
+    const fo = steps(48).map(t => g0 + t * (g1 - g0)).map(y => [sOut(y) + 0.03 + 0.03 * Math.sin(y * 5.2) + 0.015 * Math.sin(y * 13.1), y]);
+    fab.add(sect([...fo, ...fo.slice().reverse().map(([s, y]) => [s + 0.045, y])], M.fabric, L, false));
+    fab.add(sect([[bStep(g1 - 0.01), g1], [sOut(g1) + 0.1, g1], [sOut(g1) + 0.1, g1 + 0.05], [bStep(g1 - 0.01), g1 + 0.05]], M.fabric, L, false));
+    fab.add(sect([[bStep(g0), g0 - 0.05], [sOut(g0) + 0.1, g0 - 0.05], [sOut(g0) + 0.1, g0], [bStep(g0), g0]], M.fabric, L, false));
+
+    const cs = sOut(g0) + 0.6;
     const comp = d.part('Compacted soil below weep pipe', 'Compacted soil fills in under the drainage zone so water is pushed out the weeps.', [0, -1.2, -5.2]);
-    comp.add(sect([[B, -(C + C1)], [B + G + 0.6, -(C + C1)], [B + G + 0.6, wy - 0.05], [back(0.3), wy - 0.05], [B, 0]], compM, L));
+    comp.add(sect([[B, -(C + C1)], [cs, -(C + C1)], [cs, g0 - 0.05], [bStep(0.3), g0 - 0.05], [B, 0]], compM, L));
 
     const slope = s => H + Math.max(0, (s - face(H))) / 4;  // 1V:4H max above the wall
-    const clayP = d.part('Clay cap from onsite soils', 'A layer of clay over the drainage zone so runoff sheets over the top of the wall instead of soaking in.', [0, 3.6, -5.2]);
-    const c0 = face(H) + 1.0, c1 = back(g1) + G + 0.8;
-    const ctop = steps(8).map(t => c0 + t * (c1 - c0)).map(s => [s, slope(s)]);
-    clayP.add(sect([[c0, H], [c1, g1 + 0.05], ...ctop.slice().reverse()], clay, L));
+    const clayP = d.part('Clay cap from onsite soils', 'A layer of clay over the top of the wall and the drainage zone so runoff sheets over the top of the wall instead of soaking in.', [0, 3.6, -5.2]);
+    const c0 = face(H) + 1.0, c1 = sOut(g1) + 0.9;
+    const ctop = steps(10).map(t => c0 + t * (c1 - c0)).map(s => [s, slope(s)]);
+    const wallBackTop = innerStep(g1 + 0.06, H).reverse();      // down the back of the wall from the top
+    clayP.add(sect([[c0, H], [bStep(H - 0.01), H], ...wallBackTop.slice(1), [bStep(g1 + 0.01), g1 + 0.05], [c1, g1 + 0.05], ...ctop.slice().reverse()], clay, L));
 
     const ret = d.part('Retained soil', 'Natural or compacted fill behind the wall. Slope above the wall as shown on the plans.', [0, 0.4, -10]);
-    const r0 = B + G + 0.6, r1 = 14;
-    const rtop = steps(8).map(t => r0 + t * (r1 - r0)).map(s => [s, s < c1 ? g1 : slope(s)]);
-    ret.add(sect([[r0, -(C + C1) - 0.4], [r1, -(C + C1) - 0.4], ...rtop.slice().reverse().filter(([s]) => s <= r1)], fillM, L, false));
+    const r1 = 14, bot = -(C + C1) - 0.4;
+    const rtop = steps(8).map(t => c1 + t * (r1 - c1)).map(s => [s, slope(s)]);
+    const rin = steps(12).map(t => g0 + t * (g1 - g0)).map(y => [sOut(y) + 0.08, y]);
+    ret.add(sect([[cs, bot], [r1, bot], ...rtop.slice().reverse(), [c1, g1 + 0.05], ...rin.slice().reverse(), [cs, g0 - 0.05]], fillM, L, false));
 
     const fg = d.part('Final grade per civil', 'The soil in front of the wall provides passive pressure against the base and toe, helping hold the wall in place. Final grade per the civil plans.', [0, -1.0, 4.4]);
     fg.add(sect([[-5, -(C + C1) - 0.4], [0, -(C + C1) - 0.4], [0, -C], [0, 0], [-5, -1.25]], gradeM, L));

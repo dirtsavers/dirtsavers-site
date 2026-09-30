@@ -284,75 +284,98 @@
   }
 
   /* ---------- 2. Masonry screen wall on piers and grade beam ---------- */
+  /* pier-to-footing hook bars: L bars whose long leg laps down into the pier cage and whose short leg turns into the cap or beam */
+  function hookBars(g, x, z, r, yTop, n = 4, down = 3.0, leg = 0.67) {
+    for (let k = 0; k < n; k++) {
+      const a = Math.PI / 4 + (k / n) * Math.PI * 2, bx = x + Math.cos(a) * r, bz = z + Math.sin(a) * r, y = yTop - (k % 2) * 0.07;
+      g.add(bar(down, 0.04, M.rebar, 'y', bx, y - down / 2, bz));
+      const h = bar(leg, 0.04, M.rebar, 'x', 0, 0, 0); h.rotation.set(0, -(a + Math.PI), Math.PI / 2);
+      h.position.set(bx - Math.cos(a) * leg / 2, y, bz - Math.sin(a) * leg / 2); g.add(h);
+    }
+  }
+
   function buildScreen() {
-    seed = 23; const d = new Detail(); const L = 16, piers = [-7, 0, 7], H = 6;
-    const pr = d.part('Drilled concrete piers', 'Straight-shaft piers carry the wall down to stable soil.', [0, -6.5, 0]);
-    piers.forEach(x => { const c = new T.Mesh(new T.CylinderGeometry(0.6, 0.6, 9, 24), M.concreteDk); c.position.set(x, -5.8, 0); c.castShadow = true; c.receiveShadow = true; pr.add(c); });
-    const cages = d.part('Pier cages', 'Vertical bars tied inside hoops, extended up into the grade beam.', [0, -3.4, 3.2]);
-    piers.forEach(x => {
-      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; cages.add(bar(10, 0.035, M.rebar, 'y', x + Math.cos(a) * 0.42, -5.2, Math.sin(a) * 0.42)); }
-      for (let y = -9.6; y <= -0.4; y += 0.9) cages.add(ring(0.44, 0.022, M.rebar, x, y, 0));
+    // typical brick thinwall system: major columns at the ends, minor brick columns between, single wythe thin brick panels
+    seed = 23; const d = new Detail();
+    const S = 9, cols = [[-1.5 * S, 'M'], [-0.5 * S, 'm'], [0.5 * S, 'm'], [1.5 * S, 'M']];
+    const MW = 2.0, mW = 1.08, mD = 1.0, PT = 0.25, BW = 1.0, BD = 0.5, CD = 1.5, H = 6.0, PR = 0.75, PL = 10;
+    const L = 3 * S + MW, face = L / 2 - MW;
+    const top = t => (t === 'M' ? -CD : -BD);
+    const pr = d.part('Drilled concrete piers', 'Round drilled piers under every column carry the wall down to stable soil.', [0, -6.5, 0]);
+    cols.forEach(([x, t]) => { const c = new T.Mesh(new T.CylinderGeometry(PR, PR, PL, 24), M.concreteDk); c.position.set(x, top(t) - PL / 2, 0); c.castShadow = true; c.receiveShadow = true; pr.add(c); });
+    const cages = d.part('Pier cages', 'Four vertical bars inside round ties, with a double tie at the top of the pier.', [0, -4.2, 3.4], 1);
+    cols.forEach(([x, t]) => {
+      const yt = top(t), yb = yt - PL;
+      for (let k = 0; k < 4; k++) { const a = (k / 4) * Math.PI * 2; cages.add(bar(PL - 0.5, 0.04, M.rebar, 'y', x + Math.cos(a) * 0.5, yb + 0.25 + (PL - 0.5) / 2, Math.sin(a) * 0.5)); }
+      for (let y = yb + 0.4; y <= yt - 0.3; y += 1.5) cages.add(ring(0.52, 0.022, M.rebar, x, y, 0));
+      cages.add(ring(0.52, 0.022, M.rebar, x, yt - 0.2, 0)); cages.add(ring(0.52, 0.022, M.rebar, x, yt - 0.32, 0));
     });
-    const gb = d.part('Continuous grade beam', 'One continuous concrete beam spanning pier to pier under the whole wall.', [0, -3.2, 0]);
-    gb.add(box(L + 1.4, 1.5, 1.4, M.concrete, 0, -0.75, 0));
-    const gbs = d.part('Grade beam reinforcing', 'Top and bottom bars with closed stirrups.', [0, -1.6, 2.6]);
-    [[-0.3, -0.35], [-0.3, 0.35], [-1.25, -0.35], [-1.25, 0.35]].forEach(([y, z]) => gbs.add(bar(L + 1.2, 0.035, M.rebar, 'x', 0, y, z)));
-    for (let x = -L / 2 - 0.5; x <= L / 2 + 0.5; x += 0.75) gbs.add(loop(0.8, 1.05, 0.022, M.rebar, x, -0.78, 0));
-    const vf = d.part('Carton void form', 'Cardboard void form under the grade beam between piers, so swelling clay has room and does not lift the wall.', [0, -4.6, -2.4]);
-    const voidM = new T.MeshStandardMaterial({ color: 0xc9a86e, roughness: 1 });
-    [[-L / 2 - 0.7, -7.6], [-6.4, -0.6], [0.6, 6.4], [7.6, L / 2 + 0.7]].forEach(([a0, a1]) => vf.add(box(a1 - a0, 0.5, 1.3, voidM, (a0 + a1) / 2, -1.75, 0)));
-    // wall is one continuous panel; column faces and panel faces are flush
-    const WT = 1.33, cw = 1.7, bw = 0.67, bh = 0.22, lifts = 3, perLift = Math.round(H / bh / lifts);
+    const hooks = d.part('Pier hook bars', 'L-shaped bars at the top of each pier. The long leg laps down into the pier cage and the short leg turns into the pier cap or beam, tying the two together.', [0, -2.6, -3.2], 1);
+    cols.forEach(([x]) => hookBars(hooks, x, 0, 0.44, -0.27));
+    const conc = d.part('Pier caps and grade beam', 'A deeper pier cap under each major column. Under the panels and minor columns, a small concrete beam at grade ties the piers together.', [0, -3.0, 0]);
+    cols.forEach(([x, t]) => { if (t === 'M') conc.add(box(MW, CD, MW, M.concrete, x, -CD / 2, 0)); });
+    conc.add(box(2 * face, BD, BW, M.concrete, 0, -BD / 2, 0));
+    const rf = d.part('Beam and pier cap reinforcing', 'The beam under the panels and minor columns has two continuous bars with ties. At the major columns the pier cap has three bars top and bottom with closed stirrups.', [0, -1.7, 2.8], 1);
+    [-0.3, 0.3].forEach(z => rf.add(bar(L - 0.6, 0.035, M.rebar, 'x', 0, -0.25, z)));
+    for (let x = -face + 0.4; x <= face - 0.39; x += 1.5) rf.add(loop(0.78, 0.3, 0.02, M.rebar, x, -0.25, 0));
+    cols.forEach(([x, t]) => {
+      if (t !== 'M') return;
+      [-0.3, -1.2].forEach(y => [-0.7, 0, 0.7].forEach(z => rf.add(bar(MW - 0.5, 0.035, M.rebar, 'x', x, y, z))));
+      [-0.6, 0, 0.6].forEach(dx => rf.add(loop(MW - 0.5, CD - 0.5, 0.022, M.rebar, x + dx, -CD / 2, 0)));
+    });
+    const vf = d.part('Carton void form', 'Trapezoidal cardboard carton form under the beam between piers, so swelling clay has room and does not lift the wall.', [0, -4.8, -3.0], 2);
+    const voidM = new T.MeshStandardMaterial({ color: 0xa98f6b, roughness: 0.95 });
+    const stops = [[-face, cols[1][0] - PR], [cols[1][0] + PR, cols[2][0] - PR], [cols[2][0] + PR, face]];
+    stops.forEach(([a, b]) => { vf.add(box(b - a - 0.02, 0.5, BW - 0.02, voidM, (a + b) / 2, -BD - 0.25, 0)); for (let x = a + 1.5; x < b - 0.3; x += 1.5) vf.add(box(0.02, 0.51, BW + 0.01, M.capDk, x, -BD - 0.25, 0, false)); });
+    // single wythe thin brick panels between column faces
+    const edges = cols.map(([x, t]) => (t === 'M' ? [x - MW / 2, x + MW / 2] : [x - mW / 2, x + mW / 2]));
+    const segs = []; for (let e = 0; e < edges.length - 1; e++) segs.push([edges[e][1], edges[e + 1][0]]);
+    const bw = 0.8, bh = 0.22, lifts = 3, nC = Math.round(H / bh), perLift = Math.ceil(nC / lifts);
     for (let l = 0; l < lifts; l++) {
-      const g = d.part(l === 0 ? 'Continuous brick panel' : null, 'One continuous panel of brick in running bond, flush with the column faces and tied into the columns.', [0, 1.3 + l * 1.5, 0], l);
-      const geo = new T.BoxGeometry(bw - 0.03, bh - 0.025, 0.33);
-      const counts = [0, 0, 0, 0]; const cells = [];
-      for (let c = l * perLift; c < (l + 1) * perLift; c++) {
-        // lay each course between the column faces; the end bricks are cut to fit so every bay is a full rectangle
-        const segs = []; const edges = piers.map(p => [p - cw / 2, p + cw / 2]);
-        for (let e = 0; e < edges.length - 1; e++) segs.push([edges[e][1], edges[e + 1][0]]);
-        segs.forEach(([a, b]) => {
-          let x = a - (c % 2 ? bw / 2 : 0);
-          while (x < b - 0.02) {
-            const x0 = Math.max(x, a), x1 = Math.min(x + bw, b);
-            if (x1 - x0 > 0.05) { const k = (rnd() * 4) | 0; counts[k]++; cells.push([k, (x0 + x1) / 2, c * bh + bh / 2, x1 - x0]); }
-            x += bw;
-          }
-        });
-      }
-      counts.forEach((n, k) => {
-        if (!n) return; const im = new T.InstancedMesh(geo, M.brick[k], n * 2); const o = new T.Object3D(); let i = 0;
-        const bp = [], sx = [];
-        cells.filter(c => c[0] === k).forEach(([, x, y, w]) => [-(WT / 2 - 0.165), WT / 2 - 0.165].forEach(z => { o.position.set(x, y, z); o.scale.set((w - 0.03) / (bw - 0.03), 1, 1); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); bp.push(x, y, z); sx.push((w - 0.03) / (bw - 0.03)); }));
-        im.userData.bricks = { base: bp, sx, cy: (l + 0.5) * perLift * bh, last: -1 };  // each brick spreads out on its own when the panel is pulled apart
+      const g = d.part(l === 0 ? 'Single wythe thin brick panel' : null, 'One wythe of thin brick in running bond, spanning column to column on the beam.', [0, 1.3 + l * 1.5, 0], l + 2);
+      const geo = new T.BoxGeometry(bw - 0.03, bh - 0.025, PT);
+      const cells = [];
+      for (let c = l * perLift; c < Math.min(nC, (l + 1) * perLift); c++) segs.forEach(([a, b]) => {
+        let x = a - (c % 2 ? bw / 2 : 0);
+        while (x < b - 0.02) { const x0 = Math.max(x, a), x1 = Math.min(x + bw, b); if (x1 - x0 > 0.05) cells.push([(rnd() * 4) | 0, (x0 + x1) / 2, c * bh + bh / 2, x1 - x0]); x += bw; }
+      });
+      [0, 1, 2, 3].forEach(k => {
+        const cs = cells.filter(c => c[0] === k); if (!cs.length) return;
+        const im = new T.InstancedMesh(geo, M.brick[k], cs.length); const o = new T.Object3D(); const bp = [], sx = [];
+        cs.forEach(([, x, y, w], i) => { const s = (w - 0.03) / (bw - 0.03); o.position.set(x, y, 0); o.scale.set(s, 1, 1); o.updateMatrix(); im.setMatrixAt(i, o.matrix); bp.push(x, y, 0); sx.push(s); });
+        im.userData.bricks = { base: bp, sx, cy: (l + 0.5) * perLift * bh, last: -1 };
         im.castShadow = true; im.receiveShadow = true; g.add(im);
       });
     }
-    const lad = d.part('Ladder wire joint reinforcement', 'Galvanized ladder-type wire laid in the mortar joints. It ties both faces of the panel together and runs into the columns.', [0, 1.4, 3.4]);
-    for (let c = 3; c < H / bh - 1; c += 3) {
-      const y = c * bh; const zr = WT / 2 - 0.165;
-      [-zr, zr].forEach(z => lad.add(bar(L - 0.4, 0.018, M.tie, 'x', 0, y, z)));
-      for (let x = -L / 2 + 0.4; x <= L / 2 - 0.4; x += 1.33) lad.add(bar(2 * zr, 0.014, M.tie, 'z', x, y, 0));
-    }
-    const core = d.part('CMU column cores', 'Each column is hollow concrete block stacked on the grade beam over a pier. The cells get the vertical bars and are grouted solid.', [0, 1.6, -2.8]);
-    piers.forEach(x => { for (let c = 0; c < 10; c++) core.add(cmuBox(cw - 0.66 - 0.03, 0.64, WT - 0.66 - 0.03, M.block[(c + (x > 0 ? 1 : 0)) % 4], x, c * 0.667 + 0.333, 0)); });
-    const vb = d.part('Vertical bars in grouted cores', 'Vertical bars run up from the grade beam and pier through the cells of the block. The cells with bars are filled solid with grout.', [0, 2.8, 0.2]);
-    piers.forEach(x => { const cl = ((cw - 0.69) - 2 * 0.11 - 0.1) / 2; [-1, 1].forEach(sg => vb.add(bar(H + 1.8, 0.045, M.rebar, 'y', x + sg * (0.05 + cl / 2), H / 2 - 0.9, 0))); });
-    const groutS = new T.MeshStandardMaterial({ color: 0xa7a49c, roughness: 0.95, transparent: true, opacity: 0.5, depthWrite: false });
-    piers.forEach(x => { const cl = ((cw - 0.69) - 2 * 0.11 - 0.1) / 2; [-1, 1].forEach(sg => { const gm = new T.Mesh(new T.BoxGeometry(cl - 0.03, 6.6, 0.4), groutS); gm.position.set(x + sg * (0.05 + cl / 2), 3.3, 0); vb.add(gm); }); });
-    const ven = d.part('Stone veneer on the columns', 'Stone veneer wraps the CMU core, finished flush with the brick panel faces.', [0, 1.8, 3.0]);
-    piers.forEach(x => {
-      let y = 0;
-      while (y < H + 0.3) {
-        const rh = 0.5 + rnd() * 0.3;
-        [[0, WT / 2 - 0.165, cw, 0.33], [0, -(WT / 2 - 0.165), cw, 0.33], [cw / 2 - 0.165, 0, 0.33, WT - 0.66], [-(cw / 2 - 0.165), 0, 0.33, WT - 0.66]].forEach(([dx, dz, w, dd]) => ven.add(box(w - 0.03, Math.min(rh, H + 0.4 - y) - 0.03, dd - 0.03, M.stone[(rnd() * 5) | 0], x + dx, y + Math.min(rh, H + 0.4 - y) / 2, dz)));
-        y += rh;
-      }
+    const lad = d.part('Joint reinforcement', 'Galvanized wire laid in the mortar joints of the panel, running into the columns.', [0, 1.4, 3.2], 3);
+    for (let c = 3; c < nC - 1; c += 3) segs.forEach(([a, b]) => lad.add(bar(b - a + 0.5, 0.02, M.tie, 'x', (a + b) / 2, c * bh, 0)));
+    // major columns: CMU core with stone veneer
+    const core = d.part('Major column CMU cores', 'Each major column is hollow concrete block on the pier cap. The cells with bars are filled with concrete.', [0, 1.6, -2.8], 2);
+    cols.forEach(([x, t], s) => { if (t !== 'M') return; for (let c = 0; c < 9; c++) { const y = c * 0.667 + 0.333; if (c % 2) [-0.33, 0.33].forEach(dz => core.add(cmuBox(1.3, 0.64, 0.63, M.block[(c + s) % 4], x, y, dz))); else [-0.33, 0.33].forEach(dx => core.add(cmuBox(0.63, 0.64, 1.3, M.block[(c + s + 1) % 4], x + dx, y, 0))); } });
+    const vb = d.part('Column vertical bars', 'Four bars in every column, two each side, from the cap or beam to the top of the column. The cells and cores with bars are filled with concrete.', [0, 2.6, 0.3], 3);
+    const fillM = new T.MeshStandardMaterial({ color: 0xa7a49c, roughness: 0.95, transparent: true, opacity: 0.5, depthWrite: false });
+    cols.forEach(([x, t]) => {
+      if (t === 'M') { [[-0.33, -0.33], [0.33, -0.33], [-0.33, 0.33], [0.33, 0.33]].forEach(([dx, dz]) => { vb.add(bar(6.0 + 1.2, 0.045, M.rebar, 'y', x + dx, 3.0 - 0.6, dz)); const gm = new T.Mesh(new T.BoxGeometry(0.36, 5.95, 0.36), fillM); gm.position.set(x + dx, 3.0, dz); vb.add(gm); }); }
+      else { [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]].forEach(([dx, dz]) => vb.add(bar(H + 0.3, 0.045, M.rebar, 'y', x + dx, H / 2 - 0.2, dz))); const gm = new T.Mesh(new T.BoxGeometry(mW - 0.62, H - 0.05, mD - 0.62), fillM); gm.position.set(x, H / 2, 0); vb.add(gm); }
     });
-    const caps = d.part('Continuous cap', 'One cap runs the full length of the wall, with column caps over each pier to shed water.', [0, 6.8, 1.2]);
-    caps.add(box(L + 0.2, 0.3, WT + 0.25, M.capDk, 0, H + 0.15, 0));
-    piers.forEach(x => caps.add(box(cw + 0.4, 0.45, WT + 0.45, M.cap, x, H + 0.62, 0)));
-    d.center = new T.Vector3(0, 1.2, 0); d.far = 50; d.near = 46; d.yaw0 = -0.6; d.pitch = 0.22;
+    const ven = d.part('Stone veneer on the major columns', 'Stone veneer wraps the CMU core of each major column.', [0, 1.8, 3.0], 4);
+    cols.forEach(([x, t]) => {
+      if (t !== 'M') return; let y = 0;
+      while (y < 6.2) { const rh = Math.min(0.5 + rnd() * 0.3, 6.3 - y);
+        [[0, MW / 2 - 0.165, MW, 0.33], [0, -(MW / 2 - 0.165), MW, 0.33], [MW / 2 - 0.165, 0, 0.33, MW - 0.66], [-(MW / 2 - 0.165), 0, 0.33, MW - 0.66]].forEach(([dx, dz, w, dd]) => ven.add(box(w - 0.03, rh - 0.03, dd - 0.03, M.stone[(rnd() * 5) | 0], x + dx, y + rh / 2, dz)));
+        y += rh; }
+    });
+    const mb = d.part('Minor brick columns', 'Minor columns are brick, laid around a core that holds the bars and is filled with concrete.', [0, 1.6, 3.4], 4);
+    cols.forEach(([x, t], s) => {
+      if (t !== 'm') return;
+      for (let c = 0; c < nC; c++) { const y = c * bh + bh / 2, m = M.brick[(c + s) % 4], w = 0.3;
+        mb.add(box(mW - 0.03, bh - 0.025, w, m, x, y, mD / 2 - w / 2)); mb.add(box(mW - 0.03, bh - 0.025, w, m, x, y, -(mD / 2 - w / 2)));
+        mb.add(box(w, bh - 0.025, mD - 2 * w - 0.03, m, x - mW / 2 + w / 2, y, 0)); mb.add(box(w, bh - 0.025, mD - 2 * w - 0.03, m, x + mW / 2 - w / 2, y, 0)); }
+    });
+    const caps = d.part('Caps', 'Brick cap along the panels, and caps on the minor and major columns to shed water.', [0, 6.6, 1.2], 5);
+    segs.forEach(([a, b]) => caps.add(box(b - a, 0.14, PT + 0.12, M.capDk, (a + b) / 2, H + 0.07, 0)));
+    cols.forEach(([x, t]) => { if (t === 'M') caps.add(box(MW + 0.35, 0.35, MW + 0.35, M.cap, x, 6.3 + 0.175, 0)); else caps.add(box(mW + 0.2, 0.2, mD + 0.2, M.cap, x, H + 0.1, 0)); });
+    d.center = new T.Vector3(0, 0.6, 0); d.far = 62; d.near = 55; d.yaw0 = -0.55; d.pitch = 0.22; d.spin = 0.9;
     return d;
   }
 
@@ -362,8 +385,14 @@
     const pier = d.part('Drilled concrete pier', 'A drilled pier under the column carries the load down to stable soil and resists overturning from wind.', [0, -6.0, 0]);
     const ps = new T.Mesh(new T.CylinderGeometry(1.0, 1.0, 11, 28), M.concreteDk); ps.position.set(0, -7.0, 0); ps.castShadow = true; ps.receiveShadow = true; pier.add(ps);
     const cage = d.part('Pier cage', 'Vertical bars tied inside hoops, running up out of the pier into the pier cap.', [0, -3.4, 3.6]);
-    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; cage.add(bar(11.6, 0.04, M.rebar, 'y', Math.cos(a) * 0.72, -6.5, Math.sin(a) * 0.72)); }
-    for (let y = -12.0; y <= -1.2; y += 0.9) cage.add(ring(0.74, 0.024, M.rebar, 0, y, 0));
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; cage.add(bar(10.6, 0.04, M.rebar, 'y', Math.cos(a) * 0.72, -6.95, Math.sin(a) * 0.72)); }
+    for (let y = -12.0; y <= -2.0; y += 0.9) cage.add(ring(0.74, 0.024, M.rebar, 0, y, 0));
+    [-1.7, -1.82].forEach(y => cage.add(ring(0.74, 0.024, M.rebar, 0, y, 0)));
+    const mh = d.part('Pier hook bars', 'L-shaped bars at the top of the pier. The long leg laps down into the pier cage and the short leg turns into the pier cap, tying the two together.', [0, -2.6, -3.4]);
+    hookBars(mh, 0, 0, 0.62, -0.32, 8, 3.2, 0.67);
+    const mvd = d.part('Void boxes', 'Cardboard carton forms under the pier cap around the pier, so swelling clay cannot push up on the cap. The pier carries the load.', [0, -4.2, 3.0]);
+    const mvM = new T.MeshStandardMaterial({ color: 0xa98f6b, roughness: 0.95 });
+    [[0, 1.65, 4.58, 1.28], [0, -1.65, 4.58, 1.28], [1.65, 0, 1.28, 1.98], [-1.65, 0, 1.28, 1.98]].forEach(([x, z, w, dd]) => mvd.add(box(w, 0.5, dd, mvM, x, -1.75, z)));
     const ft = d.part('Pier cap', 'Concrete cap poured on top of the pier. The column bars start here.', [0, -2.4, 0]);
     ft.add(box(4.6, 1.5, 4.6, M.concrete, 0, -0.75, 0));
     const mat_ = d.part('Pier cap reinforcing', 'Top and bottom mats of bars each way, tied together with closed stirrups. The pier cage and the column bars tie into it.', [0, -1.4, -3.6]);
@@ -443,9 +472,12 @@
     pxs.forEach(x => { const c = new T.Mesh(new T.CylinderGeometry(0.9, 0.9, 10, 24), M.concreteDk); c.position.set(x, -6.5, 0); c.castShadow = true; c.receiveShadow = true; pz.add(c); });
     const pc = d.part('Pier cages', 'Vertical bars tied inside hoops, running up out of each pier into the footing.', [0, -4.6, 3.2], 1);
     pxs.forEach(x => {
-      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; pc.add(bar(10.9, 0.035, M.rebar, 'y', x + Math.cos(a) * 0.62, -5.95, Math.sin(a) * 0.62)); }
-      for (let y = -11.0; y <= -1.6; y += 0.9) pc.add(ring(0.64, 0.022, M.rebar, x, y, 0));
+      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; pc.add(bar(9.6, 0.035, M.rebar, 'y', x + Math.cos(a) * 0.62, -6.55, Math.sin(a) * 0.62)); }
+      for (let y = -11.0; y <= -2.0; y += 0.9) pc.add(ring(0.64, 0.022, M.rebar, x, y, 0));
+      [-1.7, -1.82].forEach(y => pc.add(ring(0.64, 0.022, M.rebar, x, y, 0)));
     });
+    const sh = d.part('Pier hook bars', 'L-shaped bars at the top of each pier. The long leg laps down into the pier cage and the short leg turns into the footing, tying the two together.', [0, -2.8, -3.8], 1);
+    pxs.forEach(x => hookBars(sh, x, 0, 0.5, -0.3, 4, 3.0, 0.67));
     const fr = d.part('Footing reinforcing', 'Top and bottom mats of bars each way, tied together with stirrups. Extra bars run through the wider footing under each column.', [0, -2.1, 2.8], 1);
     [-1.25, -0.3].forEach(y => {
       for (let z = -0.7; z <= 0.71; z += 0.35) fr.add(bar(FL - 0.3, 0.035, M.rebar, 'x', 0, y, z));

@@ -366,3 +366,18 @@ body{background-color:var(--bg);background-image:linear-gradient(color-mix(in sr
 .x3d-desc ol{margin:0;padding-left:1.2rem;display:grid;gap:.3rem;font-size:.92rem;color:var(--muted)}
 .x3d-desc ol b{color:var(--ink);font-weight:600}
 .quote{margin:0}
+
+.ve{margin-top:clamp(2rem,5vw,3rem)}
+.ve h3{font-size:clamp(1.3rem,2.6vw,1.7rem)}
+.ve > p{margin:.7rem 0 1.4rem;max-width:44rem;color:var(--muted)}
+.pagehead + section{padding-top:clamp(2rem,5vw,3rem)!important}
+.svc-block .body p + p,.body > p + p{margin-top:.9rem}
+.area .proj{margin-top:.9rem}
+.area > p{margin-bottom:.8rem}
+.x3d-desc{grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1.2rem}
+.x3d-desc ol{gap:.7rem}
+.x3d-desc ol b{display:block;margin-bottom:.15rem}
+.case dd{line-height:1.55}
+.quote p + cite{margin-top:.4rem}
+.next b{display:block;margin-bottom:.3rem}
+.direct span{line-height:1.5}

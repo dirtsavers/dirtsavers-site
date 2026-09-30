@@ -1,12 +1,19 @@
 /* DirtSavers exploded details. Units are feet, y is up. Zoom in (wheel, pinch, slider) and the detail comes apart and turns. */
 (function () {
   const stage = document.getElementById('stage');
-  if (!stage || !window.THREE) return;
+  if (!stage || window.x3dFailed) return;
+  const fail = why => { if (window.x3dFallback) window.x3dFallback(why); };
+  if (!window.THREE) { fail('no-three'); return; }
   const T = THREE;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- renderer / scene ---------- */
-  const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+  let renderer;
+  try {
+    renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+    if (!renderer.getContext()) throw new Error('no context');
+  } catch (err) { fail('no-webgl'); return; }
+  renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); fail('lost'); });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
@@ -621,5 +628,7 @@
     });
     renderer.render(scene, camera);
   }
-  load('wall'); resize(); setT(0.35); frame();
+  try { load('wall'); resize(); setT(0.35); frame(); } catch (err) { fail('init'); return; }
+  window.x3dReady = true;
+  const msg = document.getElementById('x3d-msg'); if (msg) msg.remove();
 })();

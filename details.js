@@ -424,6 +424,14 @@
     const L = 12, HW = 4.5, HC = 6.5, CW = 2.67, T0 = 1.33, xs = [-(L / 2 + CW / 2), L / 2 + CW / 2];
     const ft = d.part('Continuous spread footing', 'One reinforced footing runs under the wall and both columns.', [0, -3.4, 0]);
     ft.add(box(L + 2 * CW + 1.6, 1.5, 4.2, M.concrete, 0, -0.75, 0));
+    const pz = d.part('Drilled concrete piers', 'Piers under each column and one at the center carry the monument down to stable soil and resist overturning from wind.', [0, -6.2, 0], 0);
+    const pxs = [xs[0], 0, xs[1]];
+    pxs.forEach(x => { const c = new T.Mesh(new T.CylinderGeometry(0.9, 0.9, 10, 24), M.concreteDk); c.position.set(x, -6.5, 0); c.castShadow = true; c.receiveShadow = true; pz.add(c); });
+    const pc = d.part('Pier cages', 'Vertical bars tied inside hoops, running up out of each pier into the footing.', [0, -4.6, 3.2], 1);
+    pxs.forEach(x => {
+      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; pc.add(bar(10.9, 0.035, M.rebar, 'y', x + Math.cos(a) * 0.62, -5.95, Math.sin(a) * 0.62)); }
+      for (let y = -11.0; y <= -1.6; y += 0.9) pc.add(ring(0.64, 0.022, M.rebar, x, y, 0));
+    });
     const fr = d.part('Footing reinforcing', 'Top and bottom mats of bars each way, tied together with stirrups.', [0, -2.1, 2.8], 1);
     const FL = L + 2 * CW + 1.2;
     [-1.25, -0.3].forEach(y => { for (let z = -1.7; z <= 1.71; z += 0.567) fr.add(bar(FL, 0.035, M.rebar, 'x', 0, y, z)); });
@@ -473,7 +481,7 @@
     const caps = d.part('Cast stone caps', 'Caps on the wall and columns overhang the stone and shed water away from the core.', [0, 3.2, 0], 5);
     caps.add(box(L + 0.1, 0.35, T0 + 1.1, M.cap, 0, HW + 0.17, 0));
     xs.forEach(cx => { caps.add(box(CW + 0.6, 0.5, CW + 0.6, M.capDk, cx, HC + 0.25, 0)); const cr = new T.Mesh(new T.ConeGeometry((CW + 0.3) * 0.72, 0.7, 4), M.cap); cr.rotation.y = Math.PI / 4; cr.position.set(cx, HC + 0.85, 0); cr.castShadow = true; caps.add(cr); });
-    d.center = new T.Vector3(0, 1.8, 0); d.far = 44; d.near = 38; d.yaw0 = -0.45; d.pitch = 0.2; d.spin = 0.9;
+    d.center = new T.Vector3(0, -2.8, 0); d.far = 56; d.near = 50; d.yaw0 = -0.45; d.pitch = 0.2; d.spin = 0.9;
     return d;
   }
 
@@ -490,7 +498,11 @@
       ['Side web diagonals', 'Diagonals on each face turn the chords into a truss.', [0, 3.0, 2.6], 0x2b5fd9],
       ['Plan bracing', 'Bracing in the top and bottom planes stiffens the ribbon sideways against wind.', [0, 4.4, 0], 0xe0a020],
       ['Verticals and struts', 'Members between the chords tie the truss faces together.', [0, 3.0, -2.6], 0x9a9a9a]];
-    const groups = P.map(([n, note, dir], k) => d.part(n, note, dir, k * 0.6));
+    const groups = [], pr = []; let rg = null, rp = null;
+    P.forEach(([n, note, dir], k) => {
+      groups.push(d.part(n, note, dir, k * 0.6)); pr.push(d.parts[d.parts.length - 1]);
+      if (k === 0) { rg = d.part('Footing and pedestal reinforcing', 'Top and bottom mats of bars each way in the footing. The pedestal verticals hook into the bottom mat and anchor the post, with closed ties at the top of the pedestal.', [0, -2.2, 2.6], 0.3); rp = d.parts[d.parts.length - 1]; }
+    });
     const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
     fetch('entry-model.json').then(r => r.json()).then(js => js.forEach((pt, k) => {
       const g = new T.BufferGeometry();
@@ -503,8 +515,17 @@
       // spread the legend pins along the ribbon: anchor each part at one of its own vertices
       const pa = g.attributes.position.array, tx = -19 + k * 4.75; let bi = 0, bd = 1e9;
       for (let q = 0; q < pa.length; q += 3) { const dd = Math.abs(pa[q] - tx) + Math.abs(pa[q + 1] - 2) * 0.05; if (dd < bd) { bd = dd; bi = q; } }
-      d.parts[k].anchor = new T.Vector3(pa[bi], pa[bi + 1], pa[bi + 2]);
+      pr[k].anchor = new T.Vector3(pa[bi], pa[bi + 1], pa[bi + 2]);
     })).catch(() => {});
+    fetch('entry-rebar.json').then(r => r.json()).then(sg => {
+      const im = new T.InstancedMesh(new T.CylinderGeometry(1, 1, 1, 6), M.rebar, sg.length), m4 = new T.Matrix4(), q = new T.Quaternion(), up = new T.Vector3(0, 1, 0);
+      sg.forEach(([x1, y1, z1, x2, y2, z2, r], i) => {
+        const a = new T.Vector3(x1, y1, z1), b = new T.Vector3(x2, y2, z2), dv = b.clone().sub(a), len = dv.length();
+        q.setFromUnitVectors(up, dv.normalize()); m4.compose(a.add(b).multiplyScalar(0.5), q, new T.Vector3(r, len, r)); im.setMatrixAt(i, m4);
+      });
+      im.castShadow = true; im.userData.spread = 0; im.userData.base = im.position.clone(); rg.add(im);
+      const s0 = sg[sg.length - 30]; rp.anchor = new T.Vector3(s0[0], s0[1], s0[2]);
+    }).catch(() => {});
     d.center = new T.Vector3(0, 1.8, 0); d.far = 82; d.near = 74; d.yaw0 = 0.12; d.pitch = 0.32; d.spin = 0.18;
     return d;
   }

@@ -607,7 +607,7 @@
     const named = cur.parts.filter(p => p.name);
     named.forEach((p, i) => (p.n = i + 1));
     cur.parts.forEach(p => { if (!p.name) p.n = cur.parts.filter(q => q.name && q.note === p.note)[0]?.n || 0; });
-    legend.innerHTML = named.map(p => `<li data-n="${p.n}"><span class="num">${p.n}</span><div><b>${p.name}</b><small>${p.note}</small></div></li>`).join('');
+    legend.innerHTML = named.map(p => `<li data-n="${p.n}"><span class="num">${p.n}</span><div><b>${p.name}</b></div></li>`).join('');
     labelsEl.innerHTML = named.map(p => `<span class="pin" data-n="${p.n}">${p.n}</span>`).join('');
     document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.k === key));
     userYaw = 0; userPitch = 0;

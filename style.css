@@ -403,3 +403,4 @@ body{background-color:var(--bg);background-image:linear-gradient(color-mix(in sr
 .q-dot[aria-current="true"]::before{background:var(--accent);transform:scale(1.3)}
 .q-count{margin-inline-start:auto;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.quotes.is-carousel .quote,.quotes.is-carousel .quote.is-active{transition:none;animation:none}}
+

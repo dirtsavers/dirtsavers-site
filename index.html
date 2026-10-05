@@ -69,6 +69,7 @@
     <figure class="quote"><p>&ldquo;DirtSavers has been my go-to third party retaining wall engineer for 10+ years. They have designed the retaining walls on hundreds of my projects and have continually provided excellent consultation and service.&rdquo;</p><cite>Trey Bingham &middot; Vice President, C&amp;W Stoneworks</cite></figure>
     <figure class="quote"><p>&ldquo;DirtSavers provides quality, accurate and timely services. Ratliff has worked hard to earn a great reputation, and we trust DirtSavers to keep us in high standing in our industry.&rdquo;</p><cite>Bobby Kinser &middot; Director of Field Operations, Ratliff Hardscape</cite></figure>
     <figure class="quote"><p>&ldquo;When it comes to retaining wall engineering, DirtSavers is our go-to at Rock Steady Walls. Their dependable service, clear communication, and practical designs give us the confidence to keep sending projects their way.&rdquo;</p><cite>Reginald Singh &middot; Owner, Rock Steady Walls</cite></figure>
+    <figure class="quote"><p>&ldquo;Quick turnaround, very responsive, and quality design that leaves no doubt about the longevity of the wall.&rdquo;</p><cite>Garrett Seagraves &middot; Ameriwall Masonry</cite></figure>
     <figure class="quote"><p>&ldquo;DirtSavers turns our designs around quickly. Always efficient and professional.&rdquo;</p><cite>Alec Johns &middot; Sage and Stone Landscapes</cite></figure>
   </div>
 </div></section>
@@ -128,5 +129,53 @@
 </div>
 <div class="legal"><div class="wrap"><span>&copy; 2026 DirtSavers, LLC &middot; Aledo, Texas</span><span>Texas Registered Engineering Firm F-14138</span></div></div>
 </footer>
+<script>
+(function(){
+  var box=document.querySelector('.quotes');if(!box)return;
+  var slides=[].slice.call(box.querySelectorAll('.quote'));if(slides.length<2)return;
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var i=0,timer=null,paused=reduce,held=false,inView=true;
+  var ICON={prev:'<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    next:'<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    pause:'<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5.5 3.5v9M10.5 3.5v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    play:'<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z" fill="currentColor"/></svg>'};
+  function btn(cls,label,html){var b=document.createElement('button');b.type='button';b.className=cls;b.setAttribute('aria-label',label);b.innerHTML=html;return b;}
+  box.classList.add('is-carousel');
+  box.setAttribute('role','region');box.setAttribute('aria-roledescription','carousel');box.setAttribute('aria-label','Client testimonials');
+  var nav=document.createElement('div');nav.className='q-nav';
+  var prev=btn('q-btn','Previous testimonial',ICON.prev),next=btn('q-btn','Next testimonial',ICON.next),play=btn('q-btn','Pause testimonials',ICON.pause);
+  var dots=document.createElement('div');dots.className='q-dots';
+  var dotEls=slides.map(function(s,n){var d=btn('q-dot','Testimonial '+(n+1)+' of '+slides.length,'');d.addEventListener('click',function(){go(n);});dots.appendChild(d);return d;});
+  var count=document.createElement('span');count.className='q-count';count.setAttribute('aria-hidden','true');
+  nav.appendChild(prev);nav.appendChild(dots);nav.appendChild(next);nav.appendChild(play);nav.appendChild(count);
+  box.insertAdjacentElement('afterend',nav);
+  function dwell(n){var w=slides[n].querySelector('p').textContent.trim().split(/\s+/).length;return Math.max(6000,Math.min(16000,3500+w*320));}
+  function show(n,back){
+    box.style.setProperty('--q-from',back?'-1.5rem':'1.5rem');
+    slides.forEach(function(s,k){var on=k===n;s.classList.toggle('is-active',on);s.setAttribute('aria-hidden',on?'false':'true');});
+    dotEls.forEach(function(d,k){if(k===n)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});
+    count.textContent=(n+1)+' / '+slides.length;i=n;
+  }
+  function schedule(){clearTimeout(timer);if(paused||held||!inView||document.hidden)return;timer=setTimeout(function(){show((i+1)%slides.length,false);schedule();},dwell(i));}
+  function go(n){var len=slides.length,t=(n+len)%len;var back=(n<i);show(t,back);schedule();}
+  function setPaused(p){paused=p;play.innerHTML=p?ICON.play:ICON.pause;play.setAttribute('aria-label',p?'Play testimonials':'Pause testimonials');box.setAttribute('aria-live',p?'polite':'off');schedule();}
+  prev.addEventListener('click',function(){go(i-1);});
+  next.addEventListener('click',function(){go(i+1);});
+  play.addEventListener('click',function(){setPaused(!paused);});
+  nav.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'){go(i-1);}else if(e.key==='ArrowRight'){go(i+1);}});
+  [box,nav].forEach(function(el){
+    el.addEventListener('mouseenter',function(){held=true;schedule();});
+    el.addEventListener('mouseleave',function(){held=false;schedule();});
+    el.addEventListener('focusin',function(e){if(e.target.matches&&e.target.matches(':focus-visible')){held=true;schedule();}});
+    el.addEventListener('focusout',function(){held=false;schedule();});
+  });
+  var x0=null,y0=null;
+  box.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;y0=e.touches[0].clientY;held=true;clearTimeout(timer);},{passive:true});
+  box.addEventListener('touchend',function(e){held=false;if(x0===null){schedule();return;}var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){go(i+(dx<0?1:-1));}else{schedule();}},{passive:true});
+  document.addEventListener('visibilitychange',schedule);
+  if('IntersectionObserver' in window){new IntersectionObserver(function(en){inView=en[0].isIntersecting;schedule();},{threshold:.35}).observe(box);}
+  show(0,false);setPaused(reduce);
+})();
+</script>
 </body>
 </html>

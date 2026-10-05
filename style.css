@@ -388,7 +388,7 @@ body{background-color:var(--bg);background-image:linear-gradient(color-mix(in sr
 .bg-head{font-size:1.25rem;margin-top:1.8rem}.bg-list{list-style:none;padding:0;margin:.8rem 0 1.2rem;display:grid;gap:.8rem}.bg-list li{border-left:3px solid var(--accent);padding:.1rem 0 .1rem .9rem;color:var(--muted)}.bg-list b{color:var(--ink)}
 
 /* ---- testimonial carousel (enabled by script; plain grid without it) ---- */
-.quotes.is-carousel{display:grid;grid-template-columns:minmax(0,1fr);max-width:52rem}
+.quotes.is-carousel{display:grid;grid-template-columns:minmax(0,1fr);max-width:52rem;overflow:hidden}
 .quotes.is-carousel .quote{grid-area:1/1;max-width:none;padding:clamp(1.3rem,3vw,2rem);opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s}
 .quotes.is-carousel .quote.is-active{opacity:1;visibility:visible;transition:opacity .3s ease;animation:q-in .5s ease both}
 .quotes.is-carousel .quote p{font-size:clamp(1.12rem,.9rem + 1vw,1.35rem);line-height:1.5}

@@ -313,7 +313,7 @@ body{background-color:var(--bg);background-image:linear-gradient(color-mix(in sr
 .exp div{background:var(--surface);padding:1.3rem 1.2rem;display:grid;gap:.4rem;align-content:start}
 .exp b{font-family:var(--f-display);font-size:1.1rem}
 .exp span{color:var(--muted);font-size:.96rem}
-.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:1rem}
+.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:1rem}
 .quote{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:1.3rem;display:grid;gap:.8rem;align-content:space-between}
 .quote{max-width:46rem}.quote p{font-size:1.1rem;line-height:1.55}
 .quote cite{font-style:normal;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}

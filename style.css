@@ -251,8 +251,8 @@ body{line-height:1.7}
 /* hero wash: soft sunset behind the top of the page */
 .hero{background:radial-gradient(120% 70% at 85% 0%,color-mix(in srgb,var(--sky1) 28%,transparent),transparent 60%)}
 /* wall and hardscape skyline */
-.horizon{display:block;position:relative;height:clamp(70px,10vw,150px);background:var(--band);-webkit-mask:url(img/skyline-solid.svg) center bottom/auto 100% repeat-x;mask:url(img/skyline-solid.svg) center bottom/auto 100% repeat-x}
-.horizon::after{content:"";position:absolute;inset:0;background:var(--bg);-webkit-mask:url(img/skyline-lines.svg) center bottom/auto 100% repeat-x;mask:url(img/skyline-lines.svg) center bottom/auto 100% repeat-x}
+.horizon{display:block;position:relative;height:clamp(70px,10vw,150px);background:var(--band);-webkit-mask:url(img/skyline-solid.svg?v=2) center bottom/auto 100% repeat-x;mask:url(img/skyline-solid.svg?v=2) center bottom/auto 100% repeat-x}
+.horizon::after{content:"";position:absolute;inset:0;background:var(--bg);-webkit-mask:url(img/skyline-lines.svg?v=2) center bottom/auto 100% repeat-x;mask:url(img/skyline-lines.svg?v=2) center bottom/auto 100% repeat-x}
 .horizon-wrap{background:var(--bg);line-height:0}
 .cta-band{background:var(--bg);color:var(--ink);border-top:1px solid var(--line)}
 .cta-band a{background:var(--band);color:var(--band-ink);border-radius:999px}

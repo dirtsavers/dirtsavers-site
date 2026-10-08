@@ -609,7 +609,7 @@
     cur.parts.forEach(p => { if (!p.name) p.n = cur.parts.filter(q => q.name && q.note === p.note)[0]?.n || 0; });
     legend.innerHTML = named.map(p => `<li data-n="${p.n}"><span class="num">${p.n}</span><div><b>${p.name}</b></div></li>`).join('');
     labelsEl.innerHTML = named.map(p => `<span class="pin" data-n="${p.n}">${p.n}</span>`).join('');
-    document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.k === key));
+    document.querySelectorAll('.tabs button').forEach(b => { const on = b.dataset.k === key; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
     userYaw = 0; userPitch = 0;
   }
   legend.addEventListener('pointerover', e => { const li = e.target.closest('li'); hovered = li ? +li.dataset.n : -1; });
@@ -617,7 +617,12 @@
 
   const setT = v => { target = Math.max(0, Math.min(1, v)); slider.value = Math.round(target * 100); };
   slider.addEventListener('input', () => (target = slider.value / 100));
-  stage.addEventListener('wheel', e => { e.preventDefault(); setT(target - e.deltaY * 0.0011); }, { passive: false });
+  /* The wheel only takes the model apart after the visitor clicks into it, and hands scrolling back to the page at either end. */
+  let engaged = false;
+  const engage = on => { engaged = on; stage.classList.toggle('is-on', on); };
+  document.addEventListener('pointerdown', e => engage(stage.contains(e.target)));
+  stage.addEventListener('blur', () => engage(false));
+  stage.addEventListener('wheel', e => { if (!engaged) return; const nt = Math.max(0, Math.min(1, target - e.deltaY * 0.0011)); if (nt === target) return; e.preventDefault(); setT(nt); }, { passive: false });
   let drag = null, pinch = null; const pts = new Map();
   stage.addEventListener('pointerdown', e => { stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 1) drag = [e.clientX, e.clientY, userYaw, userPitch]; });
   stage.addEventListener('pointermove', e => {
@@ -627,7 +632,11 @@
   });
   const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) drag = null; };
   stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
-  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { load(b.dataset.k); setT(0.55); }));
+  const tabBtns = [...document.querySelectorAll('.tabs button')];
+  tabBtns.forEach((b, i) => {
+    b.addEventListener('click', () => { load(b.dataset.k); setT(0.55); });
+    b.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; e.preventDefault(); const n = tabBtns[(i + d + tabBtns.length) % tabBtns.length]; n.focus(); n.click(); });
+  });
   document.getElementById('assemble').addEventListener('click', () => setT(0));
   document.getElementById('explodeAll').addEventListener('click', () => setT(1));
   stage.addEventListener('keydown', e => { if (e.key === '+' || e.key === '=' || e.key === 'ArrowUp') setT(target + 0.1); if (e.key === '-' || e.key === 'ArrowDown') setT(target - 0.1); if (e.key === 'ArrowLeft') userYaw -= 0.2; if (e.key === 'ArrowRight') userYaw += 0.2; });

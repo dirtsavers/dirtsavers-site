@@ -541,3 +541,5 @@ footer .cols{font-size:.95rem}
 @media (max-width:340px){.bar{gap:.4rem}.acts{gap:.35rem}.callbtn{width:44px;padding:0}.navcta{padding:0 .6rem;font-size:.85rem}.brand b{font-size:.92rem;letter-spacing:.02em}}
 @media (max-width:900px){.side .portrait{max-width:20rem}}
 .portrait img{height:auto}
+.facts-line{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.04em;color:var(--muted);margin:.15rem 0 .6rem}
+.proj-table td:nth-child(n+4),.proj-table th:nth-child(n+4){white-space:nowrap}

@@ -539,3 +539,5 @@ footer .cols{font-size:.95rem}
 .brand small{font-size:.75rem}
 .bubble{font-size:.75rem}
 @media (max-width:340px){.bar{gap:.4rem}.acts{gap:.35rem}.callbtn{width:44px;padding:0}.navcta{padding:0 .6rem;font-size:.85rem}.brand b{font-size:.92rem;letter-spacing:.02em}}
+@media (max-width:900px){.side .portrait{max-width:20rem}}
+.portrait img{height:auto}

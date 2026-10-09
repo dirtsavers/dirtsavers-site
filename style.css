@@ -543,3 +543,12 @@ footer .cols{font-size:.95rem}
 .portrait img{height:auto}
 .facts-line{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.04em;color:var(--muted);margin:.15rem 0 .6rem}
 .proj-table td:nth-child(n+4),.proj-table th:nth-child(n+4){white-space:nowrap}
+
+/* By the numbers */
+.num-band{background:var(--band);color:var(--band-ink);padding-block:clamp(2.5rem,6vw,4rem);margin-bottom:clamp(2.5rem,6vw,4rem)}
+.num-band .sec-head p{color:inherit;opacity:.75}
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:rgba(233,230,223,.18)}
+.nums > div{background:var(--band);padding:1.3rem 1.2rem;display:grid;gap:.35rem;align-content:start}
+.nums b{font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:clamp(1.7rem,3.2vw,2.4rem);line-height:1;font-variant-numeric:tabular-nums;color:#E09A6E}
+.nums span{font-size:.92rem;opacity:.8;max-width:16rem}
+@media (max-width:900px){.nums{grid-template-columns:repeat(2,minmax(0,1fr))}}

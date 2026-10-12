@@ -559,3 +559,5 @@ footer .cols{font-size:.95rem}
 .gs-count span{color:var(--muted);font-size:.96rem;max-width:22rem}
 footer .cols a.soc{display:flex;align-items:center;gap:.5rem}
 footer .cols a.soc svg{width:1.05em;height:1.05em;flex:none}
+
+.li-btn,.prose a.li-btn{background:#0a66c2;color:#fff;text-decoration:none}.li-btn svg{width:1.1em;height:1.1em;flex:none}.li-btn:hover{filter:brightness(1.1)}.li-row{margin-top:1.1rem}

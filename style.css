@@ -561,3 +561,14 @@ footer .cols a.soc{display:flex;align-items:center;gap:.5rem}
 footer .cols a.soc svg{width:1.05em;height:1.05em;flex:none}
 
 .li-btn,.prose a.li-btn{background:#0a66c2;color:#fff;text-decoration:none}.li-btn svg{width:1.1em;height:1.1em;flex:none}.li-btn:hover{filter:brightness(1.1)}.li-row{margin-top:1.1rem}
+/* ---- court covers 3D page ---- */
+.cc-ctl label{display:inline-flex;align-items:center;gap:.4rem;font-size:.92rem;color:var(--muted);cursor:pointer}
+.cc-ctl input{accent-color:var(--accent)}
+.cc-facts{border-top:1.5px solid var(--ink);padding-top:1rem;min-width:0}
+.cc-facts h3{font-size:1.25rem}
+.cc-facts p{color:var(--muted);margin:.4rem 0 1rem}
+.cc-facts dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.45rem 1rem;margin:0}
+.cc-facts dt{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:.2rem}
+.cc-facts dd{margin:0;font-size:.98rem}
+.proj3d{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.4rem;padding:1rem 1.2rem;border:1px solid var(--line);background:var(--surface);border-radius:8px}
+.proj3d p{margin:0;color:var(--muted)}

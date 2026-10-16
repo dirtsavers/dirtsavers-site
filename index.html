@@ -166,10 +166,11 @@
 </footer>
 
 <script>
-(function(){var f=document.querySelector('.rotator');if(!f)return;var p=f.querySelectorAll('.slides picture'),c=f.querySelector('.rot-cap'),i=0,t;
-if(p.length<2||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-function go(){p[i].classList.remove('on');i=(i+1)%p.length;p[i].classList.add('on');c.innerHTML=p[i].getAttribute('data-cap')}
-function start(){stop();t=setInterval(go,6000)}function stop(){clearInterval(t)}
+(function(){var f=document.querySelector('.rotator');if(!f)return;var p=f.querySelectorAll('.slides picture'),c=f.querySelector('.rot-cap'),n=p.length,t;if(n<2)return;
+function show(j){p[i].classList.remove('on');i=j;var im=p[i].querySelector('img');im.loading='eager';p[i].classList.add('on');c.innerHTML=p[i].getAttribute('data-cap')}
+var i=0;try{var s=localStorage.getItem('dsHero');if(s!==null&&+s>=0&&+s<n)show((+s+1)%n);localStorage.setItem('dsHero',i)}catch(e){}
+function go(){show((i+1)%n);try{localStorage.setItem('dsHero',i)}catch(e){}}
+function start(){stop();t=setInterval(go,5000)}function stop(){clearInterval(t)}
 f.addEventListener('mouseenter',stop);f.addEventListener('mouseleave',start);
 document.addEventListener('visibilitychange',function(){document.hidden?stop():start()});start()})();
 </script>

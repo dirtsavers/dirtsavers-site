@@ -348,10 +348,13 @@
       const cells = [];
       for (let c = l * perLift; c < Math.min(nC, (l + 1) * perLift); c++) segs.forEach(([a, b]) => {
         let x = a - (c % 2 ? bw / 2 : 0);
-        // bottom course: three brick leave outs per panel for drainage, at the quarter points
+        // bottom course: three brick leave outs per panel for drainage, at the quarter points, 1/3 brick wide
         const lo = c === 0 ? [0.25, 0.5, 0.75].map(f => a + f * (b - a)) : [];
-        while (x < b - 0.02) { const x0 = Math.max(x, a), x1 = Math.min(x + bw, b), r = rnd();
-          if (x1 - x0 > 0.05 && !lo.some(p => p > x0 && p <= x1)) cells.push([(r * 4) | 0, (x0 + x1) / 2, c * bh + bh / 2, x1 - x0]); x += bw; }
+        while (x < b - 0.02) { const x0 = Math.max(x, a), x1 = Math.min(x + bw, b), k = (rnd() * 4) | 0;
+          const p = lo.find(q => q > x0 && q <= x1), g = bw / 3;
+          // a leave out is a gap one third of a brick wide, cut out of the brick it falls in
+          const parts = p === undefined ? [[x0, x1]] : [[x0, p - g / 2], [p + g / 2, x1]];
+          parts.forEach(([u, v]) => { if (v - u > 0.05) cells.push([k, (u + v) / 2, c * bh + bh / 2, v - u]); }); x += bw; }
       });
       [0, 1, 2, 3].forEach(k => {
         const cs = cells.filter(c => c[0] === k); if (!cs.length) return;

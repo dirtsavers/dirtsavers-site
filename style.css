@@ -598,3 +598,19 @@ p.note{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-bloc
 @media (min-width:1000px){.gs-right{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media (max-width:999px){.gs-right{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.slipdiag text{font-size:22px}.slipdiag .key text{font-size:19px}}
+
+/* Texas project map */
+.txwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:1.25rem;align-items:start}
+@media (max-width:820px){.txwrap{grid-template-columns:minmax(0,1fr)}}
+.txfig{margin:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:.75rem}
+.txmap{display:block;width:100%;height:auto}
+.txmap .cty path{fill:none;stroke:var(--line);stroke-width:.6}
+.txmap .cty path.on{fill:var(--sky1);fill-opacity:.18}
+.txmap .st{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+.txmap .dots circle{fill:var(--accent);fill-opacity:.62;stroke:var(--surface);stroke-width:1;cursor:pointer}
+.txmap .dots circle.hi{fill-opacity:1;stroke:var(--ink);stroke-width:2}
+.txmap .dfwbox{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-dasharray:5 4}
+.txmap .lbl{font-family:var(--f-mono);font-size:15px;fill:var(--ink);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
+.txmap .lbl.b{font-size:14px;fill:var(--muted)}
+.txread{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);margin-top:.6rem;min-height:1.2em}
+.txall{margin-top:1rem;font-size:.92rem;color:var(--muted)}.txall summary{cursor:pointer;color:var(--ink);font-weight:600}.txall p{margin-top:.6rem;line-height:1.7}

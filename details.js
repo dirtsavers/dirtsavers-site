@@ -343,12 +343,15 @@
     const segs = []; for (let e = 0; e < edges.length - 1; e++) segs.push([edges[e][1], edges[e + 1][0]]);
     const bw = 0.8, bh = 0.22, lifts = 3, nC = Math.round(H / bh), perLift = Math.ceil(nC / lifts);
     for (let l = 0; l < lifts; l++) {
-      const g = d.part(l === 0 ? 'Single wythe thin brick panel' : null, 'One wythe of thin brick in running bond, spanning column to column on the beam.', [0, 1.3 + l * 1.5, 0], l + 2);
+      const g = d.part(l === 0 ? 'Single wythe thin brick panel' : null, 'One wythe of thin brick in running bond, spanning column to column on the beam. Three bricks are left out of the bottom course of each panel for drainage.', [0, 1.3 + l * 1.5, 0], l + 2);
       const geo = new T.BoxGeometry(bw - 0.03, bh - 0.025, PT);
       const cells = [];
       for (let c = l * perLift; c < Math.min(nC, (l + 1) * perLift); c++) segs.forEach(([a, b]) => {
         let x = a - (c % 2 ? bw / 2 : 0);
-        while (x < b - 0.02) { const x0 = Math.max(x, a), x1 = Math.min(x + bw, b); if (x1 - x0 > 0.05) cells.push([(rnd() * 4) | 0, (x0 + x1) / 2, c * bh + bh / 2, x1 - x0]); x += bw; }
+        // bottom course: three brick leave outs per panel for drainage, at the quarter points
+        const lo = c === 0 ? [0.25, 0.5, 0.75].map(f => a + f * (b - a)) : [];
+        while (x < b - 0.02) { const x0 = Math.max(x, a), x1 = Math.min(x + bw, b), r = rnd();
+          if (x1 - x0 > 0.05 && !lo.some(p => p > x0 && p <= x1)) cells.push([(r * 4) | 0, (x0 + x1) / 2, c * bh + bh / 2, x1 - x0]); x += bw; }
       });
       [0, 1, 2, 3].forEach(k => {
         const cs = cells.filter(c => c[0] === k); if (!cs.length) return;

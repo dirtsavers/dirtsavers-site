@@ -579,3 +579,22 @@ footer .cols a.soc svg{width:1.05em;height:1.05em;flex:none}
 .rotator .slides picture.on{opacity:1}
 .rotator .slides img{width:100%;height:100%;object-fit:cover}
 @media (prefers-reduced-motion: reduce){.rotator .slides picture{transition:none}}
+
+/* How walls fail: keyed diagrams and checklist */
+.diag .slipdiag{min-width:0!important}
+@media (max-width:640px){figure.diag{overflow:visible}}
+.slipdiag text{font-family:var(--f-mono)}
+.keylist{list-style:none;margin:.7rem 0 0;padding:0;display:grid;gap:.35rem;font-size:.9rem;color:var(--ink)}
+.keylist li{display:flex;gap:.55rem;align-items:baseline}
+.keylist span{flex:none;display:inline-grid;place-items:center;width:1.35rem;height:1.35rem;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 .72rem/1 var(--f-mono);transform:translateY(.15rem)}
+.gs-right{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;counter-reset:r}
+.gs-right li{background:var(--surface);padding:1.2rem 1.3rem;counter-increment:r}
+.gs-right b{display:block;font-family:var(--f-display);font-stretch:112%;font-size:1.08rem;margin-bottom:.3rem}
+.gs-right b::before{content:counter(r,decimal-leading-zero) "  ";font-family:var(--f-mono);font-size:.78rem;color:var(--accent-text);font-weight:600}
+.gs-right span{color:var(--muted);font-size:.95rem}
+.gs-figs{display:grid}
+#what-we-provide h3{margin:1.6rem 0 .5rem}
+p.note{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-block:0 2.5rem}
+@media (min-width:1000px){.gs-right{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (max-width:999px){.gs-right{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.slipdiag text{font-size:22px}.slipdiag .key text{font-size:19px}}

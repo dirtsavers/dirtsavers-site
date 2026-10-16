@@ -49,7 +49,7 @@
       <div class="cta"><a class="btn" href="contact.html">Send plans</a><a class="btn ghost" href="tel:+14698347446">Call 469.834.7446</a></div>
 <ul class="hero-proof"><li><b>45,000+</b> homesites on our walls</li><li><b>2,000+</b> sealed designs since 2011</li><li>Texas Firm <b>F-14138</b></li></ul>
     </div>
-    <figure class="detail"><picture><source type="image/webp" srcset="img/work/silveron-1-480.webp 480w, img/work/silveron-1-800.webp 800w, img/work/silveron-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/silveron-1.jpg" alt="Tall stone retaining wall with a fence along a greenbelt in Flower Mound" width="1400" height="1050" fetchpriority="high"></picture><figcaption><span>Lakeside at Silveron &middot; Flower Mound</span></figcaption></figure>
+    <figure class="detail rotator"><div class="slides"><picture class="on" data-cap="Lakeside at Silveron &middot; Flower Mound"><source type="image/webp" srcset="img/work/silveron-1-480.webp 480w, img/work/silveron-1-800.webp 800w, img/work/silveron-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/silveron-1.jpg" alt="Tall stone retaining wall with a fence along a greenbelt in Flower Mound" width="1400" height="1050" fetchpriority="high"></picture><picture data-cap="Valley View Industrial &middot; Irving"><source type="image/webp" srcset="img/work/valleyview-1-480.webp 480w, img/work/valleyview-1-800.webp 800w, img/work/valleyview-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/valleyview-1.jpg" alt="Tall stone retaining wall along an industrial site in Irving" width="1400" height="1050" loading="lazy" decoding="async"></picture><picture data-cap="Beltmill &middot; Saginaw"><source type="image/webp" srcset="img/work/beltmill-1-480.webp 480w, img/work/beltmill-1-800.webp 800w, img/work/beltmill-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/beltmill-1.jpg" alt="Stone entry monument with tapered stone towers and a steel arch in Saginaw" width="1400" height="1050" loading="lazy" decoding="async"></picture><picture data-cap="Northpointe West &middot; Fort Worth"><source type="image/webp" srcset="img/work/northpointe-1-480.webp 480w, img/work/northpointe-1-800.webp 800w, img/work/northpointe-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/northpointe-1.jpg" alt="Stone retaining wall corner with column caps in Fort Worth" width="1400" height="1050" loading="lazy" decoding="async"></picture><picture data-cap="Tabor Ranch &middot; Denton"><source type="image/webp" srcset="img/work/tabor-1-480.webp 480w, img/work/tabor-1-800.webp 800w, img/work/tabor-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/tabor-1.jpg" alt="Stone entry monument with two tall stone towers carrying a steel sign panel in Denton" width="1400" height="1050" loading="lazy" decoding="async"></picture><picture data-cap="Acorn North &middot; Princeton"><source type="image/webp" srcset="img/work/acorn-1-480.webp 480w, img/work/acorn-1-800.webp 800w, img/work/acorn-1-1400.webp 1400w" sizes="(max-width:900px) 100vw, 560px"><img src="img/work/acorn-1.jpg" alt="Tiered stone retaining walls around a pond in Princeton" width="1400" height="1050" loading="lazy" decoding="async"></picture></div><figcaption><span class="rot-cap" aria-live="off">Lakeside at Silveron &middot; Flower Mound</span></figcaption></figure>
   </div>
   <div class="titleblock"><div class="wrap tb">
     <div><div class="k">Sealed designs</div><div class="v">2,000+</div></div>
@@ -165,5 +165,13 @@
 <div class="legal"><div class="wrap"><span>&copy; 2026 DirtSavers, LLC &middot; Aledo, Texas</span><span>Texas Registered Engineering Firm F-14138</span></div></div>
 </footer>
 
+<script>
+(function(){var f=document.querySelector('.rotator');if(!f)return;var p=f.querySelectorAll('.slides picture'),c=f.querySelector('.rot-cap'),i=0,t;
+if(p.length<2||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+function go(){p[i].classList.remove('on');i=(i+1)%p.length;p[i].classList.add('on');c.innerHTML=p[i].getAttribute('data-cap')}
+function start(){stop();t=setInterval(go,6000)}function stop(){clearInterval(t)}
+f.addEventListener('mouseenter',stop);f.addEventListener('mouseleave',start);
+document.addEventListener('visibilitychange',function(){document.hidden?stop():start()});start()})();
+</script>
 </body>
 </html>

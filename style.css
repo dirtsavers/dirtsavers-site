@@ -428,7 +428,7 @@ nav.links a[aria-current="page"],.links-m a[aria-current="page"]{color:var(--acc
 @media (max-width:980px){.util span{display:none}}
 @media (max-width:860px){
   :root{--util-h:0px}
-  html{scroll-padding-top:4.75rem}
+  html{scroll-padding-top:7.25rem}
   .util{display:none}
   nav.links{display:none}
   .brand small{display:none}

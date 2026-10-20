@@ -613,3 +613,6 @@ p.note{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-bloc
 .txmap .lbl.b{font-size:14px;fill:var(--muted)}
 .txread{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);margin-top:.6rem;min-height:1.2em}
 .txall{margin-top:1rem;font-size:.92rem;color:var(--muted)}.txall summary{cursor:pointer;color:var(--ink);font-weight:600}.txall p{margin-top:.6rem;line-height:1.7}
+
+/* phone nav: wrap when the links do not fit (For Developers added Oct 2026) */
+.links-m{flex-wrap:wrap;justify-content:center;column-gap:.15rem}

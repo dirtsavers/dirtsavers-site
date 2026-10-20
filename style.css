@@ -623,3 +623,16 @@ p.note{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-bloc
 .cc-ctl input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);margin:0}
 /* header fit on 371-400px phones (iPhone SE / mini were scrolling sideways) */
 @media (min-width:351px) and (max-width:400px){.navcta{padding:0 .8rem;font-size:.92rem}.brand b{font-size:1.12rem}.brand{gap:.5rem}}
+/* compact header on scroll (site.js adds .is-compact; removed again at the top) */
+header.top{transition:box-shadow .3s ease}
+header.top .bar,header.top .brand svg,header.top .brand b,header.top .brand small,header.top .navcta,header.top .callbtn,header.top .links-m a{transition:padding .3s ease,min-height .3s ease,width .3s ease,height .3s ease,font-size .3s ease,opacity .3s ease}
+header.top.is-compact{box-shadow:0 6px 18px -14px rgba(58,50,43,.55)}
+header.top.is-compact .bar{padding-block:.3rem}
+header.top.is-compact .brand svg{width:32px;height:26px}
+header.top.is-compact .brand small{opacity:.75}
+header.top.is-compact .navcta,header.top.is-compact .callbtn{min-height:40px}
+header.top.is-compact .callbtn{width:40px}
+header.top.is-compact .links-m a{min-height:38px}
+@media (min-width:901px){header.top.is-compact .brand b{font-size:1.18rem}}
+@media (max-width:900px){header.top.is-compact .brand svg{width:29px;height:23px}}
+@media (prefers-reduced-motion:reduce){header.top,header.top *{transition:none!important}}

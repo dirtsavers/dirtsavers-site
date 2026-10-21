@@ -636,3 +636,11 @@ header.top.is-compact .links-m a{min-height:38px}
 @media (min-width:901px){header.top.is-compact .brand b{font-size:1.18rem}}
 @media (max-width:900px){header.top.is-compact .brand svg{width:29px;height:23px}}
 @media (prefers-reduced-motion:reduce){header.top,header.top *{transition:none!important}}
+/* phone: tighter compact header on scroll so the nav row tucks up under the bar (Oct 2026) */
+@media (max-width:860px){
+  header.top.is-compact .brand{min-height:34px}
+  header.top.is-compact .bar{padding-block:.15rem}
+  header.top.is-compact .navcta,header.top.is-compact .callbtn{min-height:34px}
+  header.top.is-compact .callbtn{width:34px}
+  header.top.is-compact .links-m a{min-height:30px;font-size:.8rem}
+}

@@ -653,3 +653,14 @@ header.top.is-compact .links-m a{min-height:38px}
   header.top.is-compact .callbtn{width:34px}
   header.top.is-compact .links-m a{min-height:30px;font-size:.8rem}
 }
+
+/* home: who we design for */
+.paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem}
+.path{display:grid;gap:.45rem;align-content:start;padding:1.4rem 1.4rem 1.3rem;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:6px;color:var(--ink);text-decoration:none;transition:border-color .15s,transform .15s}
+.path:hover{border-color:var(--line-strong);border-top-color:var(--accent);transform:translateY(-2px)}
+.path .label{color:var(--accent-text)}
+.path b{font-family:var(--f-display);font-stretch:104%;font-size:1.35rem}
+.path span{color:var(--muted)}
+.path .go{color:var(--accent-text);font-weight:600;margin-top:.3rem}
+@media (max-width:700px){.paths{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.path{transition:none}.path:hover{transform:none}}

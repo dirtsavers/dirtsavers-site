@@ -595,7 +595,7 @@ footer .cols a.soc svg{width:1.05em;height:1.05em;flex:none}
 .gs-figs{display:grid}
 #what-we-provide h3{margin:1.6rem 0 .5rem}
 p.note{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-block:0 2.5rem}
-@media (min-width:1000px){.gs-right{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (min-width:1000px){.gs-right{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:999px){.gs-right{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.slipdiag text{font-size:22px}.slipdiag .key text{font-size:19px}}
 

@@ -618,6 +618,15 @@ p.note{color:var(--muted);font-family:var(--f-mono);font-size:.72rem;margin-bloc
 .links-m{flex-wrap:wrap;justify-content:space-between;column-gap:0;padding-inline:4px;font-size:.84rem}
 .links-m a{padding-inline:.32rem}
 @media (max-width:370px){.links-m a{padding-inline:.2rem}}
+/* desktop nav: six links read Developers and Contractors (the "For" shows only to screen readers) */
+nav.links .nf{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.brand small{white-space:nowrap}
+@media (min-width:861px) and (max-width:1200px){.brand small{display:none}}
+@media (min-width:861px) and (max-width:1040px){nav.links a{padding-inline:.38rem;font-size:.95rem}.top .bar{gap:.6rem}}
+@media (min-width:861px) and (max-width:940px){nav.links a{padding-inline:.26rem;font-size:.9rem}}
+@media (min-width:861px) and (max-width:900px){.top .bar{gap:.35rem}.navcta{padding:0 .9rem}}
+/* phone nav: six links (For Contractors added Oct 2026) sit in two even rows of three */
+@media (max-width:720px){html{scroll-padding-top:9.25rem}.links-m{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));justify-items:center;row-gap:0;padding-block:2px}.links-m a{min-height:38px;justify-content:center;width:100%}}
 /* court cover toggles: full-size tap targets on phones */
 .cc-ctl label{display:inline-flex;align-items:center;gap:.5rem;min-height:44px;cursor:pointer}
 .cc-ctl input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);margin:0}

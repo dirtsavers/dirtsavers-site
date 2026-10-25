@@ -653,6 +653,16 @@ header.top.is-compact .links-m a{min-height:38px}
   header.top.is-compact .callbtn{width:34px}
   header.top.is-compact .links-m a{min-height:30px;font-size:.8rem}
 }
+/* phone: on scroll the top lines squeeze together (logo bar, then the two nav rows) */
+@media (max-width:860px){
+  header.top .links-m{transition:padding .3s ease}
+  header.top.is-compact .bar{padding-block:.05rem}
+  header.top.is-compact .brand{min-height:30px}
+  header.top.is-compact .navcta,header.top.is-compact .callbtn{min-height:30px}
+  header.top.is-compact .callbtn{width:30px}
+  header.top.is-compact .links-m{padding-block:0 3px}
+  header.top.is-compact .links-m a{min-height:22px;line-height:1.1}
+}
 
 /* home: who we design for */
 .paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem}
